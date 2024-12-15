@@ -14,7 +14,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SignUpForm } from "./SignUpForm";
 
 interface QuoteFormProps {
   items: Array<{ foodItem: any; quantity: number }>;
@@ -112,15 +115,39 @@ export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Sign in to submit your quote</DialogTitle>
+            <DialogTitle>Welcome to Our Catering Service</DialogTitle>
+            <DialogDescription>
+              Sign in or create an account to submit your quote
+            </DialogDescription>
           </DialogHeader>
-          <Auth
-            supabaseClient={supabase}
-            appearance={{ theme: ThemeSupa }}
-            theme="light"
-            providers={[]}
-            redirectTo={window.location.origin + "/restaurant"}
-          />
+          <Tabs defaultValue="signup" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+            </TabsList>
+            <TabsContent value="signup">
+              <SignUpForm onSuccess={() => setShowAuthDialog(false)} />
+            </TabsContent>
+            <TabsContent value="signin">
+              <Auth
+                supabaseClient={supabase}
+                appearance={{ 
+                  theme: ThemeSupa,
+                  variables: {
+                    default: {
+                      colors: {
+                        brand: 'rgb(var(--foreground))',
+                        brandAccent: 'rgb(var(--primary))',
+                      },
+                    },
+                  },
+                }}
+                theme="light"
+                providers={[]}
+                redirectTo={window.location.origin + "/restaurant"}
+              />
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </>
