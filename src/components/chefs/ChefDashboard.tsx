@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { QuotationTable } from "./QuotationTable";
 import { QuoteStatus, OrderStatus } from "@/integrations/supabase/types/enums";
 
@@ -40,6 +41,26 @@ export const ChefDashboard = () => {
 
     checkAuth();
   }, [navigate, toast]);
+
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Signed out successfully",
+      });
+      
+      navigate('/chef/login');
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
+  };
 
   const { data: quotes, isLoading: quotesLoading, refetch: refetchQuotes } = useQuery({
     queryKey: ['quotes'],
@@ -103,12 +124,12 @@ export const ChefDashboard = () => {
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold">Chef Dashboard</h2>
-        <button
-          onClick={() => supabase.auth.signOut()}
-          className="bg-destructive text-destructive-foreground hover:bg-destructive/90 px-4 py-2 rounded"
+        <Button
+          variant="destructive"
+          onClick={handleSignOut}
         >
           Sign Out
-        </button>
+        </Button>
       </div>
       
       <Tabs defaultValue="quotes" className="space-y-4">
