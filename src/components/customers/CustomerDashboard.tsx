@@ -57,8 +57,8 @@ export const CustomerDashboard = () => {
   const handleStatusUpdate = async (id: string, type: 'quotation' | 'quote', action: 'received' | 'confirm') => {
     try {
       const updateData = action === 'received' 
-        ? { order_status: 'received' }
-        : { is_confirmed: true, order_status: 'confirmed' };
+        ? { order_status: 'received' as const }
+        : { is_confirmed: true, order_status: 'confirmed' as const };
 
       const { error } = await supabase
         .from(type === 'quotation' ? 'quotations' : 'quotes')

@@ -22,11 +22,20 @@ export const ChefForm = ({ initialData, onSuccess, onCancel }: ChefFormProps) =>
   });
   const { toast } = useToast();
 
+  const validateEmail = (email: string) => {
+    const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return re.test(email);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      if (!validateEmail(formData.email)) {
+        throw new Error("Please enter a valid email address");
+      }
+
       const submissionData = {
         name: formData.name,
         email: formData.email,
@@ -48,6 +57,10 @@ export const ChefForm = ({ initialData, onSuccess, onCancel }: ChefFormProps) =>
           description: "Chef updated successfully",
         });
       } else {
+        if (!formData.password || formData.password.length < 6) {
+          throw new Error("Password must be at least 6 characters long");
+        }
+
         // Create new chef with auth account
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: formData.email,
@@ -114,6 +127,7 @@ export const ChefForm = ({ initialData, onSuccess, onCancel }: ChefFormProps) =>
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             required
+            minLength={6}
           />
         </div>
       )}

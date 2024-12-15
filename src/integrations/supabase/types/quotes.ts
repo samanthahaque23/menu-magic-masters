@@ -20,14 +20,15 @@ export interface Quote {
   party_location: string | null;
   veg_guests: number | null;
   non_veg_guests: number | null;
-  quote_status: QuoteStatus;
+  quote_status: QuoteStatus | null;
   order_status: OrderStatus | null;
   total_price: number | null;
-  is_confirmed: boolean;
+  is_confirmed: boolean | null;
   created_at: string;
   profiles?: {
     full_name: string | null;
     email: string;
+    phone?: string | null;
   };
   quote_items?: QuoteItem[];
 }
