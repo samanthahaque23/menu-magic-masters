@@ -22,5 +22,9 @@ export interface Quote {
   non_veg_guests: number | null;
   status: QuoteStatus | null;
   created_at: string;
+  profiles?: {
+    full_name: string | null;
+    email: string;
+  };
   quote_items?: QuoteItem[];
 }
