@@ -15,9 +15,13 @@ export const ChefDashboard = () => {
         .from('quotes')
         .select(`
           *,
-          profiles (full_name, email),
+          profiles (full_name, email, phone),
           quote_items (
+            id,
+            quote_id,
+            food_item_id,
             quantity,
+            created_at,
             food_items (
               name,
               dietary_preference,

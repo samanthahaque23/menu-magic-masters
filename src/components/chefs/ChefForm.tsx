@@ -23,8 +23,9 @@ export const ChefForm = ({ initialData, onSuccess, onCancel }: ChefFormProps) =>
   const { toast } = useToast();
 
   const validateEmail = (email: string) => {
-    const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return re.test(email);
+    // More strict email validation
+    const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,7 +64,7 @@ export const ChefForm = ({ initialData, onSuccess, onCancel }: ChefFormProps) =>
 
         // Create new chef with auth account
         const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: formData.email,
+          email: formData.email.trim().toLowerCase(), // Normalize email
           password: formData.password,
           options: {
             data: {
