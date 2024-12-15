@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { OrderProgress } from "../chefs/OrderProgress";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 export const CustomerDashboard = () => {
   const { toast } = useToast();

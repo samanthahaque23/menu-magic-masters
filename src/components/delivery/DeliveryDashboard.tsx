@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { OrderProgress } from "../chefs/OrderProgress";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 export const DeliveryDashboard = () => {
   const { toast } = useToast();
@@ -26,7 +26,7 @@ export const DeliveryDashboard = () => {
             )
           )
         `)
-        .eq('order_status', 'ready_to_deliver')
+        .in('order_status', ['ready_to_deliver', 'on_the_way'])
         .order('created_at', { ascending: false });
 
       const quotesPromise = supabase
@@ -43,7 +43,7 @@ export const DeliveryDashboard = () => {
             )
           )
         `)
-        .eq('order_status', 'ready_to_deliver')
+        .in('order_status', ['ready_to_deliver', 'on_the_way'])
         .order('created_at', { ascending: false });
 
       const [quotationsResult, quotesResult] = await Promise.all([
