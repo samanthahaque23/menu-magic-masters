@@ -54,18 +54,24 @@ export const CustomerDashboard = () => {
     },
   });
 
-  const markAsReceived = async (id: string, type: 'quotation' | 'quote') => {
+  const handleStatusUpdate = async (id: string, type: 'quotation' | 'quote', action: 'received' | 'confirm') => {
     try {
+      const updateData = action === 'received' 
+        ? { status: 'received' }
+        : { is_confirmed: true };
+
       const { error } = await supabase
         .from(type === 'quotation' ? 'quotations' : 'quotes')
-        .update({ status: 'received' })
+        .update(updateData)
         .eq('id', id);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Order marked as received",
+        description: action === 'received' 
+          ? "Order marked as received"
+          : "Order confirmed successfully",
       });
 
       refetch();
@@ -95,6 +101,11 @@ export const CustomerDashboard = () => {
                 <p>Location: {order.party_location}</p>
                 <p>Vegetarian Guests: {order.veg_guests}</p>
                 <p>Non-vegetarian Guests: {order.non_veg_guests}</p>
+                {order.total_price && (
+                  <p className="mt-4 text-lg font-semibold">
+                    Total Price: ${order.total_price}
+                  </p>
+                )}
               </div>
               <div>
                 <h3 className="font-semibold mb-2">Menu Items</h3>
@@ -123,12 +134,26 @@ export const CustomerDashboard = () => {
                 <OrderProgress status={order.status} />
                 {order.status === 'delivered' && (
                   <Button
-                    onClick={() => markAsReceived(
+                    onClick={() => handleStatusUpdate(
                       order.id,
-                      'quotation_items' in order ? 'quotation' : 'quote'
+                      'quotation_items' in order ? 'quotation' : 'quote',
+                      'received'
                     )}
                   >
                     Mark as Received
+                  </Button>
+                )}
+                {order.total_price && !order.is_confirmed && order.status === 'approved' && (
+                  <Button
+                    variant="default"
+                    className="w-full"
+                    onClick={() => handleStatusUpdate(
+                      order.id,
+                      'quotation_items' in order ? 'quotation' : 'quote',
+                      'confirm'
+                    )}
+                  >
+                    Confirm Order (${order.total_price})
                   </Button>
                 )}
               </div>

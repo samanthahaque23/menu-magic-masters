@@ -173,30 +173,36 @@ export type Database = {
           created_at: string
           customer_id: string
           id: string
+          is_confirmed: boolean | null
           non_veg_guests: number
           party_date: string
           party_location: string
           status: Database["public"]["Enums"]["quotation_status"]
+          total_price: number | null
           veg_guests: number
         }
         Insert: {
           created_at?: string
           customer_id: string
           id?: string
+          is_confirmed?: boolean | null
           non_veg_guests?: number
           party_date: string
           party_location: string
           status?: Database["public"]["Enums"]["quotation_status"]
+          total_price?: number | null
           veg_guests?: number
         }
         Update: {
           created_at?: string
           customer_id?: string
           id?: string
+          is_confirmed?: boolean | null
           non_veg_guests?: number
           party_date?: string
           party_location?: string
           status?: Database["public"]["Enums"]["quotation_status"]
+          total_price?: number | null
           veg_guests?: number
         }
         Relationships: [
@@ -253,30 +259,36 @@ export type Database = {
           created_at: string
           customer_id: string | null
           id: string
+          is_confirmed: boolean | null
           non_veg_guests: number | null
           party_date: string | null
           party_location: string | null
           status: Database["public"]["Enums"]["quote_status"] | null
+          total_price: number | null
           veg_guests: number | null
         }
         Insert: {
           created_at?: string
           customer_id?: string | null
           id?: string
+          is_confirmed?: boolean | null
           non_veg_guests?: number | null
           party_date?: string | null
           party_location?: string | null
           status?: Database["public"]["Enums"]["quote_status"] | null
+          total_price?: number | null
           veg_guests?: number | null
         }
         Update: {
           created_at?: string
           customer_id?: string | null
           id?: string
+          is_confirmed?: boolean | null
           non_veg_guests?: number | null
           party_date?: string | null
           party_location?: string | null
           status?: Database["public"]["Enums"]["quote_status"] | null
+          total_price?: number | null
           veg_guests?: number | null
         }
         Relationships: [
