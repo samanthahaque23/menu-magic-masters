@@ -1,3 +1,12 @@
+import type { 
+  TablesChefs,
+  TablesCustomers,
+  TablesFoodItems,
+  TablesProfiles,
+  TablesQuotations,
+  TablesQuotationItems 
+} from './tables';
+
 export type Json =
   | string
   | number

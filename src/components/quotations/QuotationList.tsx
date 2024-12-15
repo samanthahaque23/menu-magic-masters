@@ -13,10 +13,17 @@ export const QuotationList = () => {
         .from('quotations')
         .select(`
           *,
-          profiles:customer_id (full_name, email),
+          customer:customer_id (
+            full_name,
+            email
+          ),
           quotation_items (
-            *,
-            food_items (*)
+            quantity,
+            food_item:food_item_id (
+              name,
+              dietary_preference,
+              course_type
+            )
           )
         `)
         .order('created_at', { ascending: false });
@@ -48,8 +55,8 @@ export const QuotationList = () => {
               <TableRow key={quotation.id}>
                 <TableCell>
                   <div>
-                    <p className="font-medium">{quotation.profiles?.full_name}</p>
-                    <p className="text-sm text-muted-foreground">{quotation.profiles?.email}</p>
+                    <p className="font-medium">{quotation.customer?.full_name}</p>
+                    <p className="text-sm text-muted-foreground">{quotation.customer?.email}</p>
                   </div>
                 </TableCell>
                 <TableCell>{format(new Date(quotation.party_date), 'PPP')}</TableCell>
@@ -76,7 +83,7 @@ export const QuotationList = () => {
                     <ul className="text-sm">
                       {quotation.quotation_items?.map((item) => (
                         <li key={item.id}>
-                          {item.food_items?.name} x{item.quantity}
+                          {item.food_item?.name} x{item.quantity}
                         </li>
                       ))}
                     </ul>
