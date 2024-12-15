@@ -69,7 +69,7 @@ export const ChefDashboard = () => {
         .from('quotes')
         .select(`
           *,
-          profiles (full_name, email, phone),
+          profiles!quotes_customer_id_fkey (full_name, email, phone),
           quote_items (
             id,
             quote_id,
