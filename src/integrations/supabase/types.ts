@@ -256,6 +256,7 @@ export type Database = {
       }
       quotes: {
         Row: {
+          chef_id: string | null
           created_at: string
           customer_id: string | null
           id: string
@@ -269,6 +270,7 @@ export type Database = {
           veg_guests: number | null
         }
         Insert: {
+          chef_id?: string | null
           created_at?: string
           customer_id?: string | null
           id?: string
@@ -282,6 +284,7 @@ export type Database = {
           veg_guests?: number | null
         }
         Update: {
+          chef_id?: string | null
           created_at?: string
           customer_id?: string | null
           id?: string
@@ -295,6 +298,13 @@ export type Database = {
           veg_guests?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "quotes_chef_id_fkey"
+            columns: ["chef_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "quotes_customer_id_fkey"
             columns: ["customer_id"]
@@ -322,7 +332,7 @@ export type Database = {
         | "on_the_way"
         | "delivered"
         | "received"
-      quote_status: "pending" | "approved" | "rejected"
+      quote_status: "pending" | "approved" | "rejected" | "rejected_by_customer"
     }
     CompositeTypes: {
       [_ in never]: never

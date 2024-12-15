@@ -1,4 +1,4 @@
-export type QuoteStatus = 'pending' | 'approved' | 'rejected';
+export type QuoteStatus = 'pending' | 'approved' | 'rejected' | 'rejected_by_customer';
 export type OrderStatus = 
   | 'pending_confirmation'
   | 'confirmed'
