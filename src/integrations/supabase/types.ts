@@ -175,9 +175,10 @@ export type Database = {
           id: string
           is_confirmed: boolean | null
           non_veg_guests: number
+          order_status: Database["public"]["Enums"]["order_status"] | null
           party_date: string
           party_location: string
-          status: Database["public"]["Enums"]["quotation_status"]
+          quote_status: Database["public"]["Enums"]["quote_status"] | null
           total_price: number | null
           veg_guests: number
         }
@@ -187,9 +188,10 @@ export type Database = {
           id?: string
           is_confirmed?: boolean | null
           non_veg_guests?: number
+          order_status?: Database["public"]["Enums"]["order_status"] | null
           party_date: string
           party_location: string
-          status?: Database["public"]["Enums"]["quotation_status"]
+          quote_status?: Database["public"]["Enums"]["quote_status"] | null
           total_price?: number | null
           veg_guests?: number
         }
@@ -199,9 +201,10 @@ export type Database = {
           id?: string
           is_confirmed?: boolean | null
           non_veg_guests?: number
+          order_status?: Database["public"]["Enums"]["order_status"] | null
           party_date?: string
           party_location?: string
-          status?: Database["public"]["Enums"]["quotation_status"]
+          quote_status?: Database["public"]["Enums"]["quote_status"] | null
           total_price?: number | null
           veg_guests?: number
         }
@@ -261,9 +264,10 @@ export type Database = {
           id: string
           is_confirmed: boolean | null
           non_veg_guests: number | null
+          order_status: Database["public"]["Enums"]["order_status"] | null
           party_date: string | null
           party_location: string | null
-          status: Database["public"]["Enums"]["quote_status"] | null
+          quote_status: Database["public"]["Enums"]["quote_status"] | null
           total_price: number | null
           veg_guests: number | null
         }
@@ -273,9 +277,10 @@ export type Database = {
           id?: string
           is_confirmed?: boolean | null
           non_veg_guests?: number | null
+          order_status?: Database["public"]["Enums"]["order_status"] | null
           party_date?: string | null
           party_location?: string | null
-          status?: Database["public"]["Enums"]["quote_status"] | null
+          quote_status?: Database["public"]["Enums"]["quote_status"] | null
           total_price?: number | null
           veg_guests?: number | null
         }
@@ -285,9 +290,10 @@ export type Database = {
           id?: string
           is_confirmed?: boolean | null
           non_veg_guests?: number | null
+          order_status?: Database["public"]["Enums"]["order_status"] | null
           party_date?: string | null
           party_location?: string | null
-          status?: Database["public"]["Enums"]["quote_status"] | null
+          quote_status?: Database["public"]["Enums"]["quote_status"] | null
           total_price?: number | null
           veg_guests?: number | null
         }
@@ -311,24 +317,15 @@ export type Database = {
     Enums: {
       course_type: "starter" | "mains" | "desserts"
       dietary_preference: "vegetarian" | "non-vegetarian"
-      quotation_status:
-        | "pending"
-        | "approved"
-        | "rejected"
+      order_status:
+        | "pending_confirmation"
+        | "confirmed"
         | "processing"
         | "ready_to_deliver"
         | "on_the_way"
         | "delivered"
         | "received"
-      quote_status:
-        | "pending"
-        | "approved"
-        | "rejected"
-        | "processing"
-        | "ready_to_deliver"
-        | "on_the_way"
-        | "delivered"
-        | "received"
+      quote_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
