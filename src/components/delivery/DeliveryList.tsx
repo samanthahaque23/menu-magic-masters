@@ -2,7 +2,7 @@ import { DeliveryCard } from "./DeliveryCard";
 
 interface DeliveryListProps {
   orders: any[];
-  onStatusUpdate: (id: string, type: 'quotation' | 'quote', newStatus: 'on_the_way' | 'delivered') => Promise<void>;
+  onStatusUpdate: (id: string, type: 'quote', newStatus: 'on_the_way' | 'delivered') => Promise<void>;
 }
 
 export const DeliveryList = ({ orders, onStatusUpdate }: DeliveryListProps) => {

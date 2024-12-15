@@ -9,28 +9,15 @@ export const DeliveryDashboard = () => {
   const { data: orders, isLoading, refetch } = useQuery({
     queryKey: ['delivery-orders'],
     queryFn: async () => {
-      const quotationsPromise = supabase
-        .from('quotations')
-        .select(`
-          *,
-          profiles (full_name, email),
-          quotation_items (
-            quantity,
-            food_items (
-              name,
-              dietary_preference,
-              course_type
-            )
-          )
-        `)
-        .in('order_status', ['ready_to_deliver', 'on_the_way', 'delivered', 'received'])
-        .order('created_at', { ascending: false });
-
-      const quotesPromise = supabase
+      // We only have quotes table, no quotations table
+      const { data: quotes, error } = await supabase
         .from('quotes')
         .select(`
           *,
-          profiles!quotes_customer_id_fkey (full_name, email),
+          profiles!quotes_customer_id_fkey (
+            full_name,
+            email
+          ),
           quote_items (
             quantity,
             food_items (
@@ -43,22 +30,15 @@ export const DeliveryDashboard = () => {
         .in('order_status', ['ready_to_deliver', 'on_the_way', 'delivered', 'received'])
         .order('created_at', { ascending: false });
 
-      const [quotationsResult, quotesResult] = await Promise.all([
-        quotationsPromise,
-        quotesPromise
-      ]);
-
-      if (quotationsResult.error) throw quotationsResult.error;
-      if (quotesResult.error) throw quotesResult.error;
-
-      return [...(quotationsResult.data || []), ...(quotesResult.data || [])];
+      if (error) throw error;
+      return quotes || [];
     },
   });
 
-  const updateOrderStatus = async (id: string, type: 'quotation' | 'quote', newStatus: 'on_the_way' | 'delivered') => {
+  const updateOrderStatus = async (id: string, type: 'quote', newStatus: 'on_the_way' | 'delivered') => {
     try {
       const { error } = await supabase
-        .from(type === 'quotation' ? 'quotations' : 'quotes')
+        .from('quotes')
         .update({ order_status: newStatus })
         .eq('id', id);
 
