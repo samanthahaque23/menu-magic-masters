@@ -9,6 +9,63 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      chefs: {
+        Row: {
+          created_at: string
+          email: string
+          experience_years: number | null
+          id: string
+          name: string
+          phone: string | null
+          speciality: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          experience_years?: number | null
+          id?: string
+          name: string
+          phone?: string | null
+          speciality?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          experience_years?: number | null
+          id?: string
+          name?: string
+          phone?: string | null
+          speciality?: string | null
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
       food_items: {
         Row: {
           course_type: Database["public"]["Enums"]["course_type"]
