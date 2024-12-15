@@ -39,8 +39,14 @@ export const CustomerDashboard = () => {
   const handleStatusUpdate = async (id: string, action: 'received' | 'confirm') => {
     try {
       const updateData = action === 'received' 
-        ? { order_status: 'received' as const }
-        : { is_confirmed: true, order_status: 'confirmed' as const };
+        ? { 
+            order_status: 'received' as const 
+          }
+        : { 
+            is_confirmed: true, 
+            order_status: 'confirmed' as const,
+            quote_status: 'approved' as const 
+          };
 
       const { error } = await supabase
         .from('quotes')
@@ -115,7 +121,7 @@ export const CustomerDashboard = () => {
                     Mark as Received
                   </Button>
                 )}
-                {order.total_price && !order.is_confirmed && order.quote_status === 'approved' && (
+                {order.total_price && !order.is_confirmed && order.quote_status === 'pending' && (
                   <Button
                     variant="default"
                     className="w-full"
