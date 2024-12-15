@@ -26,7 +26,7 @@ export const DeliveryDashboard = () => {
             )
           )
         `)
-        .in('order_status', ['ready_to_deliver', 'on_the_way'])
+        .in('order_status', ['ready_to_deliver', 'on_the_way', 'delivered'])
         .order('created_at', { ascending: false });
 
       const quotesPromise = supabase
@@ -43,7 +43,7 @@ export const DeliveryDashboard = () => {
             )
           )
         `)
-        .in('order_status', ['ready_to_deliver', 'on_the_way'])
+        .in('order_status', ['ready_to_deliver', 'on_the_way', 'delivered'])
         .order('created_at', { ascending: false });
 
       const [quotationsResult, quotesResult] = await Promise.all([
