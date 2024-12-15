@@ -4,20 +4,49 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Database } from "@/integrations/supabase/types";
+
+type Quotation = {
+  id: string;
+  party_date: string;
+  party_location: string;
+  veg_guests: number;
+  non_veg_guests: number;
+  status: Database["public"]["Enums"]["quotation_status"];
+  customer: {
+    full_name: string | null;
+    email: string;
+  } | null;
+  quotation_items: {
+    id: string;
+    quantity: number;
+    food_item: {
+      name: string;
+      dietary_preference: Database["public"]["Enums"]["dietary_preference"];
+      course_type: Database["public"]["Enums"]["course_type"];
+    } | null;
+  }[] | null;
+};
 
 export const QuotationList = () => {
-  const { data: quotations, isLoading } = useQuery({
+  const { data: quotations, isLoading } = useQuery<Quotation[]>({
     queryKey: ['quotations'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('quotations')
         .select(`
-          *,
+          id,
+          party_date,
+          party_location,
+          veg_guests,
+          non_veg_guests,
+          status,
           customer:customer_id (
             full_name,
             email
           ),
           quotation_items (
+            id,
             quantity,
             food_item:food_item_id (
               name,
