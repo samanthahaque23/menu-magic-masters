@@ -31,6 +31,10 @@ export const CustomerDashboard = () => {
         .from('quotes')
         .select(`
           *,
+          profiles!quotes_customer_id_fkey (
+            full_name,
+            email
+          ),
           quote_items (
             quantity,
             food_items (
