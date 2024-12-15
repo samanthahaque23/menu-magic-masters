@@ -21,9 +21,9 @@ const Index = () => {
           <div className="space-x-4">
             <Button 
               variant="secondary"
-              onClick={() => navigate('/quotations')}
+              onClick={() => navigate('/restaurant')}
             >
-              View Quotations
+              Restaurant Menu
             </Button>
             <Button 
               variant="secondary"
