@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Check, X } from "lucide-react";
+import { Check } from "lucide-react";
 import { format } from "date-fns";
 import { OrderProgress } from "./OrderProgress";
 import { QuoteStatus, OrderStatus } from "@/integrations/supabase/types/enums";
@@ -42,21 +42,17 @@ export const QuotationTable = ({ quotations, onStatusUpdate }: QuotationTablePro
       return;
     }
 
-    // Create a new quote entry for this chef
-    const { error: quoteError } = await supabase
+    // Update the quote with chef's price
+    const { error: updateError } = await supabase
       .from('quotes')
-      .insert({
-        customer_id: quotation.customer_id,
-        party_date: quotation.party_date,
-        party_location: quotation.party_location,
-        veg_guests: quotation.veg_guests,
-        non_veg_guests: quotation.non_veg_guests,
+      .update({
         total_price: price,
-        quote_status: 'pending',
-        chef_id: session.user.id
-      });
+        chef_id: session.user.id,
+        quote_status: 'pending'
+      })
+      .eq('id', quotation.id);
 
-    if (quoteError) {
+    if (updateError) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -133,7 +129,7 @@ export const QuotationTable = ({ quotations, onStatusUpdate }: QuotationTablePro
                 )}
               </TableCell>
               <TableCell>
-                {quotation.quote_status === 'pending' && (
+                {quotation.quote_status === 'pending' && !quotation.chef_id && (
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <Input

@@ -73,31 +73,8 @@ export const ChefDashboard = () => {
     queryFn: async () => {
       if (!session?.user?.id) return [];
       
-      // First, get all quotations that are pending
-      const { data: quotationsData, error: quotationsError } = await supabase
-        .from('quotations')
-        .select(`
-          *,
-          profiles!quotations_customer_id_fkey (full_name, email, phone),
-          quotation_items (
-            id,
-            quotation_id,
-            food_item_id,
-            quantity,
-            created_at,
-            food_items (
-              name,
-              dietary_preference,
-              course_type
-            )
-          )
-        `)
-        .eq('quote_status', 'pending');
-
-      if (quotationsError) throw quotationsError;
-
-      // Then, get quotes submitted by the current chef
-      const { data: chefQuotes, error: chefQuotesError } = await supabase
+      // Get all quotes that are pending or submitted by the current chef
+      const { data: quotesData, error: quotesError } = await supabase
         .from('quotes')
         .select(`
           *,
@@ -115,13 +92,11 @@ export const ChefDashboard = () => {
             )
           )
         `)
-        .eq('chef_id', session.user.id)
+        .or(`quote_status.eq.pending,chef_id.eq.${session.user.id}`)
         .order('created_at', { ascending: false });
 
-      if (chefQuotesError) throw chefQuotesError;
-
-      // Combine both quotations and chef's quotes
-      return [...(quotationsData || []), ...(chefQuotes || [])];
+      if (quotesError) throw quotesError;
+      return quotesData || [];
     },
     enabled: !!session?.user?.id,
   });
