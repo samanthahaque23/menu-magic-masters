@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { OrderProgress } from "../chefs/OrderProgress";
 import { DeliveryActions } from "./DeliveryActions";
+import { Badge } from "@/components/ui/badge";
 
 interface DeliveryCardProps {
   order: any;
@@ -47,6 +48,9 @@ export const DeliveryCard = ({ order, onStatusUpdate }: DeliveryCardProps) => {
             quoteStatus={order.quote_status} 
             orderStatus={order.order_status}
           />
+          {order.order_status === 'received' && (
+            <Badge variant="secondary">Received by Customer</Badge>
+          )}
           <DeliveryActions
             order={order}
             onStatusUpdate={onStatusUpdate}
