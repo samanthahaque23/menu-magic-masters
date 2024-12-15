@@ -7,17 +7,6 @@ import { CustomerInfoFields } from "./CustomerInfoFields";
 import { PartyDetailsFields } from "./PartyDetailsFields";
 import { PartyDatePicker } from "./PartyDatePicker";
 import { QuoteFormData } from "./types";
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SignUpForm } from "./SignUpForm";
 
 interface QuoteFormProps {
   items: Array<{ foodItem: any; quantity: number }>;
@@ -26,19 +15,11 @@ interface QuoteFormProps {
 
 export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
   const [date, setDate] = useState<Date>();
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const { toast } = useToast();
   const { register, handleSubmit, formState: { errors } } = useForm<QuoteFormData>();
 
   const onSubmit = async (data: QuoteFormData) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        setShowAuthDialog(true);
-        return;
-      }
-
       if (!date) {
         toast({
           variant: "destructive",
@@ -52,7 +33,6 @@ export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
       const { data: quote, error: quoteError } = await supabase
         .from('quotes')
         .insert({
-          customer_id: user.id,
           party_date: date.toISOString(),
           party_location: data.partyLocation,
           veg_guests: data.vegGuests,
@@ -62,16 +42,6 @@ export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
         .single();
 
       if (quoteError) throw quoteError;
-
-      // Update profile information
-      await supabase
-        .from('profiles')
-        .update({
-          full_name: data.fullName,
-          phone: data.phone,
-          address: data.address,
-        })
-        .eq('id', user.id);
 
       // Create quote items
       const quoteItems = items.map(item => ({
@@ -102,54 +72,13 @@ export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
   };
 
   return (
-    <>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <CustomerInfoFields register={register} errors={errors} />
-        <PartyDatePicker date={date} onDateChange={setDate} />
-        <PartyDetailsFields register={register} errors={errors} />
-        <Button type="submit" className="w-full">
-          Submit Quote
-        </Button>
-      </form>
-
-      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Welcome to Our Catering Service</DialogTitle>
-            <DialogDescription>
-              Sign in or create an account to submit your quote
-            </DialogDescription>
-          </DialogHeader>
-          <Tabs defaultValue="signup" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-            </TabsList>
-            <TabsContent value="signup">
-              <SignUpForm onSuccess={() => setShowAuthDialog(false)} />
-            </TabsContent>
-            <TabsContent value="signin">
-              <Auth
-                supabaseClient={supabase}
-                appearance={{ 
-                  theme: ThemeSupa,
-                  variables: {
-                    default: {
-                      colors: {
-                        brand: 'rgb(var(--foreground))',
-                        brandAccent: 'rgb(var(--primary))',
-                      },
-                    },
-                  },
-                }}
-                theme="light"
-                providers={[]}
-                redirectTo={window.location.origin + "/restaurant"}
-              />
-            </TabsContent>
-          </Tabs>
-        </DialogContent>
-      </Dialog>
-    </>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <CustomerInfoFields register={register} errors={errors} />
+      <PartyDatePicker date={date} onDateChange={setDate} />
+      <PartyDetailsFields register={register} errors={errors} />
+      <Button type="submit" className="w-full">
+        Submit Quote
+      </Button>
+    </form>
   );
 };
