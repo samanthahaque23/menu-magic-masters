@@ -126,30 +126,32 @@ export const DeliveryDashboard = () => {
                   quoteStatus={order.quote_status} 
                   orderStatus={order.order_status}
                 />
-                <div className="flex gap-2">
-                  {order.order_status === 'ready_to_deliver' && (
-                    <Button 
-                      onClick={() => updateOrderStatus(
-                        order.id, 
-                        'quotation_items' in order ? 'quotation' : 'quote', 
-                        'on_the_way'
-                      )}
-                    >
-                      Start Delivery
-                    </Button>
-                  )}
-                  {order.order_status === 'on_the_way' && (
-                    <Button 
-                      onClick={() => updateOrderStatus(
-                        order.id, 
-                        'quotation_items' in order ? 'quotation' : 'quote', 
-                        'delivered'
-                      )}
-                    >
-                      Mark as Delivered
-                    </Button>
-                  )}
-                </div>
+                {order.order_status !== 'delivered' && (
+                  <div className="flex gap-2">
+                    {order.order_status === 'ready_to_deliver' && (
+                      <Button 
+                        onClick={() => updateOrderStatus(
+                          order.id, 
+                          'quotation_items' in order ? 'quotation' : 'quote', 
+                          'on_the_way'
+                        )}
+                      >
+                        Start Delivery
+                      </Button>
+                    )}
+                    {order.order_status === 'on_the_way' && (
+                      <Button 
+                        onClick={() => updateOrderStatus(
+                          order.id, 
+                          'quotation_items' in order ? 'quotation' : 'quote', 
+                          'delivered'
+                        )}
+                      >
+                        Mark as Delivered
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </Card>
