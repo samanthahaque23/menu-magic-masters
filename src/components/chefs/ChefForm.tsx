@@ -18,6 +18,7 @@ export const ChefForm = ({ initialData, onSuccess, onCancel }: ChefFormProps) =>
     speciality: initialData?.speciality || '',
     experience_years: initialData?.experience_years || '',
     phone: initialData?.phone || '',
+    password: '', // New password field
   });
   const { toast } = useToast();
 
@@ -27,11 +28,15 @@ export const ChefForm = ({ initialData, onSuccess, onCancel }: ChefFormProps) =>
 
     try {
       const submissionData = {
-        ...formData,
+        name: formData.name,
+        email: formData.email,
+        speciality: formData.speciality,
         experience_years: formData.experience_years ? parseInt(formData.experience_years) : null,
+        phone: formData.phone,
       };
 
       if (initialData) {
+        // Update existing chef
         const { error } = await supabase
           .from('chefs')
           .update(submissionData)
@@ -43,11 +48,26 @@ export const ChefForm = ({ initialData, onSuccess, onCancel }: ChefFormProps) =>
           description: "Chef updated successfully",
         });
       } else {
-        const { error } = await supabase
+        // Create new chef with auth account
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              role: 'chef',
+            }
+          }
+        });
+
+        if (authError) throw authError;
+
+        // Create chef record
+        const { error: chefError } = await supabase
           .from('chefs')
           .insert([submissionData]);
 
-        if (error) throw error;
+        if (chefError) throw chefError;
+
         toast({
           title: "Success",
           description: "Chef created successfully",
@@ -85,6 +105,18 @@ export const ChefForm = ({ initialData, onSuccess, onCancel }: ChefFormProps) =>
           required
         />
       </div>
+
+      {!initialData && (
+        <div>
+          <Input
+            type="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            required
+          />
+        </div>
+      )}
 
       <div>
         <Input
