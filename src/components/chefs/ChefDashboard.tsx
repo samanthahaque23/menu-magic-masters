@@ -40,9 +40,38 @@ export const ChefDashboard = () => {
         });
         await supabase.auth.signOut();
         navigate('/chef/login');
-      } else {
-        setChefName(chefData.name);
+        return;
       }
+
+      // Ensure chef has a profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+
+      if (!profileData) {
+        // Create profile if it doesn't exist
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: session.user.id,
+            email: session.user.email,
+            full_name: chefData.name,
+            role: 'chef'
+          });
+
+        if (insertError) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to create chef profile.",
+          });
+          return;
+        }
+      }
+
+      setChefName(chefData.name);
     };
 
     checkAuth();
@@ -73,7 +102,6 @@ export const ChefDashboard = () => {
     queryFn: async () => {
       if (!session?.user?.id) return [];
       
-      // Get all quotes that are pending or submitted by the current chef
       const { data: quotesData, error: quotesError } = await supabase
         .from('quotes')
         .select(`

@@ -16,6 +16,7 @@ export interface QuoteItem {
 export interface Quote {
   id: string;
   customer_id: string | null;
+  chef_id: string | null;  // Added this field
   party_date: string | null;
   party_location: string | null;
   veg_guests: number | null;
