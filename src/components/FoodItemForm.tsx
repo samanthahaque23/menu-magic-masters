@@ -17,7 +17,6 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     description: initialData?.description || '',
-    price: initialData?.price || '',
     dietary_preference: initialData?.dietary_preference || 'vegetarian',
     course_type: initialData?.course_type || 'starter',
   });
@@ -31,10 +30,7 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
       if (initialData) {
         const { error } = await supabase
           .from('food_items')
-          .update({
-            ...formData,
-            price: parseFloat(formData.price),
-          })
+          .update(formData)
           .eq('id', initialData.id);
 
         if (error) throw error;
@@ -45,10 +41,7 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
       } else {
         const { error } = await supabase
           .from('food_items')
-          .insert([{
-            ...formData,
-            price: parseFloat(formData.price),
-          }]);
+          .insert([formData]);
 
         if (error) throw error;
         toast({
@@ -84,17 +77,6 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
           placeholder="Description"
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-        />
-      </div>
-
-      <div>
-        <Input
-          type="number"
-          step="0.01"
-          placeholder="Price"
-          value={formData.price}
-          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-          required
         />
       </div>
 

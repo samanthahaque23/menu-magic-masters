@@ -32,13 +32,14 @@ export const ChefDashboard = () => {
     },
   });
 
-  const handleStatusUpdate = async (id: string, quoteStatus: QuoteStatus, orderStatus?: OrderStatus) => {
+  const handleStatusUpdate = async (id: string, quoteStatus: QuoteStatus, orderStatus?: OrderStatus, price?: number) => {
     try {
       const { error } = await supabase
         .from('quotes')
         .update({ 
           quote_status: quoteStatus,
-          ...(orderStatus && { order_status: orderStatus })
+          ...(orderStatus && { order_status: orderStatus }),
+          ...(price && { total_price: price })
         })
         .eq('id', id);
 

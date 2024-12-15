@@ -75,7 +75,6 @@ export type Database = {
           id: string
           is_available: boolean | null
           name: string
-          price: number
         }
         Insert: {
           course_type: Database["public"]["Enums"]["course_type"]
@@ -85,7 +84,6 @@ export type Database = {
           id?: string
           is_available?: boolean | null
           name: string
-          price: number
         }
         Update: {
           course_type?: Database["public"]["Enums"]["course_type"]
@@ -95,7 +93,6 @@ export type Database = {
           id?: string
           is_available?: boolean | null
           name?: string
-          price?: number
         }
         Relationships: []
       }

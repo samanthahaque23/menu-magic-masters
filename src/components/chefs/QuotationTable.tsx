@@ -1,18 +1,31 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Check, X } from "lucide-react";
 import { format } from "date-fns";
 import { OrderProgress } from "./OrderProgress";
 import { QuoteStatus, OrderStatus } from "@/integrations/supabase/types/enums";
 import type { Quote } from "@/integrations/supabase/types/quotes";
+import { useState } from "react";
 
 interface QuotationTableProps {
   quotations: Quote[];
-  onStatusUpdate: (id: string, quoteStatus: QuoteStatus, orderStatus?: OrderStatus) => void;
+  onStatusUpdate: (id: string, quoteStatus: QuoteStatus, orderStatus?: OrderStatus, price?: number) => void;
 }
 
 export const QuotationTable = ({ quotations, onStatusUpdate }: QuotationTableProps) => {
+  const [prices, setPrices] = useState<Record<string, string>>({});
+
+  const handleAccept = (quotation: Quote) => {
+    const price = parseFloat(prices[quotation.id] || "0");
+    if (!price || price <= 0) {
+      alert("Please enter a valid price before accepting the quote");
+      return;
+    }
+    onStatusUpdate(quotation.id, 'approved', 'pending_confirmation', price);
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -64,22 +77,36 @@ export const QuotationTable = ({ quotations, onStatusUpdate }: QuotationTablePro
               </TableCell>
               <TableCell>
                 {quotation.quote_status === 'pending' && (
-                  <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      onClick={() => onStatusUpdate(quotation.id, 'approved', 'pending_confirmation')}
-                    >
-                      <Check className="h-4 w-4 mr-1" />
-                      Accept
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => onStatusUpdate(quotation.id, 'rejected')}
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Reject
-                    </Button>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        type="number"
+                        placeholder="Enter price"
+                        value={prices[quotation.id] || ''}
+                        onChange={(e) => setPrices(prev => ({
+                          ...prev,
+                          [quotation.id]: e.target.value
+                        }))}
+                        className="w-32"
+                      />
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleAccept(quotation)}
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => onStatusUpdate(quotation.id, 'rejected')}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Reject
+                      </Button>
+                    </div>
                   </div>
                 )}
                 {quotation.quote_status === 'approved' && quotation.order_status === 'confirmed' && (
