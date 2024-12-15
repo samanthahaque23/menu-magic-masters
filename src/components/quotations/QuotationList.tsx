@@ -5,53 +5,22 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { Database } from "@/integrations/supabase/types";
-
-type Quotation = {
-  id: string;
-  party_date: string;
-  party_location: string;
-  veg_guests: number;
-  non_veg_guests: number;
-  status: Database["public"]["Enums"]["quotation_status"];
-  customer: {
-    full_name: string | null;
-    email: string;
-  } | null;
-  quotation_items: {
-    id: string;
-    quantity: number;
-    food_item: {
-      name: string;
-      dietary_preference: Database["public"]["Enums"]["dietary_preference"];
-      course_type: Database["public"]["Enums"]["course_type"];
-    } | null;
-  }[] | null;
-};
+import { Check, X } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 export const QuotationList = () => {
-  const navigate = useNavigate();
-  const { data: quotations, isLoading } = useQuery<Quotation[]>({
-    queryKey: ['quotations'],
+  const { toast } = useToast();
+  const { data: quotations, isLoading, refetch } = useQuery({
+    queryKey: ['admin-quotations'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('quotations')
         .select(`
-          id,
-          party_date,
-          party_location,
-          veg_guests,
-          non_veg_guests,
-          status,
-          customer:profiles!quotations_customer_id_fkey (
-            full_name,
-            email
-          ),
+          *,
+          profiles (full_name, email),
           quotation_items (
-            id,
             quantity,
-            food_item:food_items (
+            food_items (
               name,
               dietary_preference,
               course_type
@@ -61,33 +30,47 @@ export const QuotationList = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Quotation[];
+      return data;
     },
   });
+
+  const handleStatusUpdate = async (quotationId: string, newStatus: 'approved' | 'rejected') => {
+    try {
+      const { error } = await supabase
+        .from('quotations')
+        .update({ status: newStatus })
+        .eq('id', quotationId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Quotation ${newStatus} successfully`,
+      });
+      
+      refetch();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
+  };
 
   if (isLoading) return <div>Loading...</div>;
 
   return (
-    <div className="container mx-auto p-6 space-y-4">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-2xl font-bold">Quotations</h3>
-        <Button 
-          onClick={() => navigate('/')}
-          className="bg-primary hover:bg-primary/90 text-white"
-        >
-          Browse Restaurant Menu
-        </Button>
-      </div>
+    <div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Customer</TableHead>
-              <TableHead>Party Date</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Guests</TableHead>
+              <TableHead>Party Details</TableHead>
+              <TableHead>Menu Items</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Items</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -95,15 +78,31 @@ export const QuotationList = () => {
               <TableRow key={quotation.id}>
                 <TableCell>
                   <div>
-                    <p className="font-medium">{quotation.customer?.full_name}</p>
-                    <p className="text-sm text-muted-foreground">{quotation.customer?.email}</p>
+                    <p className="font-medium">{quotation.profiles?.full_name}</p>
+                    <p className="text-sm text-muted-foreground">{quotation.profiles?.email}</p>
                   </div>
                 </TableCell>
-                <TableCell>{format(new Date(quotation.party_date), 'PPP')}</TableCell>
-                <TableCell>{quotation.party_location}</TableCell>
                 <TableCell>
-                  <p>Veg: {quotation.veg_guests}</p>
-                  <p>Non-veg: {quotation.non_veg_guests}</p>
+                  <div>
+                    <p>Date: {format(new Date(quotation.party_date), 'PPP')}</p>
+                    <p>Location: {quotation.party_location}</p>
+                    <p>Veg Guests: {quotation.veg_guests}</p>
+                    <p>Non-veg Guests: {quotation.non_veg_guests}</p>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Card className="p-2">
+                    <ul className="text-sm space-y-1">
+                      {quotation.quotation_items?.map((item, index) => (
+                        <li key={index}>
+                          {item.food_items?.name} x{item.quantity}
+                          <span className="text-xs ml-2 text-muted-foreground">
+                            ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
                 </TableCell>
                 <TableCell>
                   <Badge
@@ -119,15 +118,25 @@ export const QuotationList = () => {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Card className="p-2">
-                    <ul className="text-sm">
-                      {quotation.quotation_items?.map((item) => (
-                        <li key={item.id}>
-                          {item.food_item?.name} x{item.quantity}
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
+                  {quotation.status === 'pending' && (
+                    <div className="flex space-x-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleStatusUpdate(quotation.id, 'approved')}
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleStatusUpdate(quotation.id, 'rejected')}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Reject
+                      </Button>
+                    </div>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
