@@ -73,7 +73,7 @@ export const ChefDashboard = () => {
     queryFn: async () => {
       if (!session?.user?.id) return [];
       
-      // First, get quotes that haven't been quoted by any chef
+      // First, get all quotations that are pending
       const { data: quotationsData, error: quotationsError } = await supabase
         .from('quotations')
         .select(`
@@ -92,15 +92,22 @@ export const ChefDashboard = () => {
             )
           )
         `)
-        .eq('quote_status', 'pending')
-        .not('id', 'in', (
-          await supabase
-            .from('quotes')
-            .select('quotation_id')
-            .neq('chef_id', session.user.id)
-        ).data?.map(q => q.quotation_id) || []);
+        .eq('quote_status', 'pending');
 
       if (quotationsError) throw quotationsError;
+
+      // Get all quotes from other chefs
+      const { data: otherChefQuotes, error: otherChefQuotesError } = await supabase
+        .from('quotes')
+        .select('id')
+        .neq('chef_id', session.user.id);
+
+      if (otherChefQuotesError) throw otherChefQuotesError;
+
+      // Filter out quotations that other chefs have already quoted
+      const availableQuotations = quotationsData?.filter(quotation => 
+        !otherChefQuotes?.some(quote => quote.id === quotation.id)
+      ) || [];
 
       // Then, get quotes submitted by the current chef
       const { data: chefQuotes, error: chefQuotesError } = await supabase
@@ -126,7 +133,7 @@ export const ChefDashboard = () => {
 
       if (chefQuotesError) throw chefQuotesError;
 
-      return [...(quotationsData || []), ...(chefQuotes || [])];
+      return [...availableQuotations, ...(chefQuotes || [])];
     },
     enabled: !!session?.user?.id,
   });
