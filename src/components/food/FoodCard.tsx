@@ -19,24 +19,21 @@ export const FoodCard = ({ item, onEdit, onDelete }: FoodCardProps) => {
         <span className="capitalize">{item.dietary_preference}</span>
         <span className="capitalize">{item.course_type}</span>
       </div>
-      <div className="flex justify-between items-center">
-        <div className="text-primary font-bold">${item.price.toFixed(2)}</div>
-        <div className="flex space-x-2">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => onEdit(item)}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => onDelete(item)}
-          >
-            <Trash className="h-4 w-4" />
-          </Button>
-        </div>
+      <div className="flex justify-end space-x-2">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => onEdit(item)}
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => onDelete(item)}
+        >
+          <Trash className="h-4 w-4" />
+        </Button>
       </div>
     </Card>
   );

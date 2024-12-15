@@ -1,4 +1,4 @@
-import { DietaryPreference, CourseType, QuotationStatus } from './enums';
+import { DietaryPreference, CourseType, QuoteStatus, OrderStatus } from './enums';
 
 export interface QuotationItem {
   id: string;
@@ -20,7 +20,8 @@ export interface Quotation {
   party_location: string;
   veg_guests: number;
   non_veg_guests: number;
-  status: QuotationStatus;
+  quote_status: QuoteStatus;
+  order_status?: OrderStatus;
   created_at: string;
   profiles?: {
     full_name: string | null;

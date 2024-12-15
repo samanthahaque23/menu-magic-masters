@@ -57,8 +57,8 @@ export const CustomerDashboard = () => {
   const handleStatusUpdate = async (id: string, type: 'quotation' | 'quote', action: 'received' | 'confirm') => {
     try {
       const updateData = action === 'received' 
-        ? { status: 'received' }
-        : { is_confirmed: true };
+        ? { order_status: 'received' }
+        : { is_confirmed: true, order_status: 'confirmed' };
 
       const { error } = await supabase
         .from(type === 'quotation' ? 'quotations' : 'quotes')
@@ -131,8 +131,11 @@ export const CustomerDashboard = () => {
               </div>
               <div className="space-y-4">
                 <h3 className="font-semibold mb-2">Order Status</h3>
-                <OrderProgress status={order.status} />
-                {order.status === 'delivered' && (
+                <OrderProgress 
+                  quoteStatus={order.quote_status} 
+                  orderStatus={order.order_status}
+                />
+                {order.order_status === 'delivered' && (
                   <Button
                     onClick={() => handleStatusUpdate(
                       order.id,
@@ -143,7 +146,7 @@ export const CustomerDashboard = () => {
                     Mark as Received
                   </Button>
                 )}
-                {order.total_price && !order.is_confirmed && order.status === 'approved' && (
+                {order.total_price && !order.is_confirmed && order.quote_status === 'approved' && (
                   <Button
                     variant="default"
                     className="w-full"
