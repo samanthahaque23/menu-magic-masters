@@ -253,19 +253,31 @@ export type Database = {
           created_at: string
           customer_id: string | null
           id: string
+          non_veg_guests: number | null
+          party_date: string | null
+          party_location: string | null
           status: Database["public"]["Enums"]["quote_status"] | null
+          veg_guests: number | null
         }
         Insert: {
           created_at?: string
           customer_id?: string | null
           id?: string
+          non_veg_guests?: number | null
+          party_date?: string | null
+          party_location?: string | null
           status?: Database["public"]["Enums"]["quote_status"] | null
+          veg_guests?: number | null
         }
         Update: {
           created_at?: string
           customer_id?: string | null
           id?: string
+          non_veg_guests?: number | null
+          party_date?: string | null
+          party_location?: string | null
           status?: Database["public"]["Enums"]["quote_status"] | null
+          veg_guests?: number | null
         }
         Relationships: [
           {

@@ -6,11 +6,13 @@ import { useToast } from "@/hooks/use-toast";
 import { PlusCircle, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { QuoteList } from "./QuoteList";
+import { QuoteForm } from "./QuoteForm";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 export const RestaurantMenu = () => {
   const { toast } = useToast();
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
+  const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [quoteItems, setQuoteItems] = useState<Array<{ foodItem: any; quantity: number }>>([]);
 
   const { data: foodItems, isLoading } = useQuery({
@@ -44,6 +46,16 @@ export const RestaurantMenu = () => {
     });
   };
 
+  const handleQuoteSuccess = () => {
+    setShowQuoteForm(false);
+    setIsQuoteOpen(false);
+    setQuoteItems([]);
+    toast({
+      title: "Quote Submitted",
+      description: "Your quote has been submitted successfully.",
+    });
+  };
+
   if (isLoading) return <div className="text-center p-8">Loading...</div>;
 
   return (
@@ -57,11 +69,25 @@ export const RestaurantMenu = () => {
               Quote List ({quoteItems.reduce((acc, item) => acc + item.quantity, 0)})
             </Button>
           </SheetTrigger>
-          <SheetContent>
+          <SheetContent className="overflow-y-auto">
             <SheetHeader>
               <SheetTitle>Your Quote</SheetTitle>
             </SheetHeader>
-            <QuoteList items={quoteItems} setItems={setQuoteItems} />
+            {showQuoteForm ? (
+              <QuoteForm items={quoteItems} onSuccess={handleQuoteSuccess} />
+            ) : (
+              <div className="space-y-4">
+                <QuoteList items={quoteItems} setItems={setQuoteItems} />
+                {quoteItems.length > 0 && (
+                  <Button 
+                    className="w-full" 
+                    onClick={() => setShowQuoteForm(true)}
+                  >
+                    Proceed to Quote Details
+                  </Button>
+                )}
+              </div>
+            )}
           </SheetContent>
         </Sheet>
       </div>
