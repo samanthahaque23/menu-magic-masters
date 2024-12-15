@@ -25,54 +25,68 @@ export const ChefDashboard = () => {
 
       setSession(session);
 
-      // Verify the user is a chef
-      const { data: chefData, error: chefError } = await supabase
-        .from('chefs')
-        .select('*')
-        .eq('email', session.user.email)
-        .single();
+      try {
+        // Verify the user is a chef
+        const { data: chefData, error: chefError } = await supabase
+          .from('chefs')
+          .select('*')
+          .eq('email', session.user.email)
+          .single();
 
-      if (chefError || !chefData) {
-        toast({
-          variant: "destructive",
-          title: "Access Denied",
-          description: "You are not registered as a chef.",
-        });
-        await supabase.auth.signOut();
-        navigate('/chef/login');
-        return;
-      }
-
-      // Get or create profile
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-
-      if (!profileData) {
-        // Create profile if it doesn't exist
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: session.user.id,
-            email: session.user.email,
-            full_name: chefData.name,
-            role: 'chef'
-          });
-
-        if (insertError) {
-          console.error('Profile creation error:', insertError);
+        if (chefError || !chefData) {
           toast({
             variant: "destructive",
-            title: "Error",
-            description: "Failed to create chef profile.",
+            title: "Access Denied",
+            description: "You are not registered as a chef.",
           });
+          await supabase.auth.signOut();
+          navigate('/chef/login');
           return;
         }
-      }
 
-      setChefName(chefData.name);
+        // Check if profile exists
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle(); // Use maybeSingle() instead of single()
+
+        if (!profileData) {
+          // Create profile if it doesn't exist
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: session.user.id,
+              email: session.user.email,
+              full_name: chefData.name,
+              role: 'chef'
+            });
+
+          if (insertError) {
+            console.error('Profile creation error:', insertError);
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: "Failed to create chef profile.",
+            });
+            return;
+          }
+
+          toast({
+            title: "Profile Created",
+            description: "Your chef profile has been created successfully.",
+          });
+        }
+
+        setChefName(chefData.name);
+      } catch (error: any) {
+        console.error('Error in auth check:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "An error occurred while setting up your profile.",
+        });
+      }
     };
 
     checkAuth();
