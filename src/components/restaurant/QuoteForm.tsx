@@ -7,6 +7,14 @@ import { CustomerInfoFields } from "./CustomerInfoFields";
 import { PartyDetailsFields } from "./PartyDetailsFields";
 import { PartyDatePicker } from "./PartyDatePicker";
 import { QuoteFormData } from "./types";
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface QuoteFormProps {
   items: Array<{ foodItem: any; quantity: number }>;
@@ -15,6 +23,7 @@ interface QuoteFormProps {
 
 export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
   const [date, setDate] = useState<Date>();
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const { toast } = useToast();
   const { register, handleSubmit, formState: { errors } } = useForm<QuoteFormData>();
 
@@ -23,11 +32,7 @@ export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Please sign in to submit a quote",
-        });
+        setShowAuthDialog(true);
         return;
       }
 
@@ -94,13 +99,30 @@ export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <CustomerInfoFields register={register} errors={errors} />
-      <PartyDatePicker date={date} onDateChange={setDate} />
-      <PartyDetailsFields register={register} errors={errors} />
-      <Button type="submit" className="w-full">
-        Submit Quote
-      </Button>
-    </form>
+    <>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <CustomerInfoFields register={register} errors={errors} />
+        <PartyDatePicker date={date} onDateChange={setDate} />
+        <PartyDetailsFields register={register} errors={errors} />
+        <Button type="submit" className="w-full">
+          Submit Quote
+        </Button>
+      </form>
+
+      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Sign in to submit your quote</DialogTitle>
+          </DialogHeader>
+          <Auth
+            supabaseClient={supabase}
+            appearance={{ theme: ThemeSupa }}
+            theme="light"
+            providers={[]}
+            redirectTo={window.location.origin + "/restaurant"}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
