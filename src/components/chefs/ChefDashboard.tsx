@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QuotationTable } from "./QuotationTable";
+import { QuotationStatus, QuoteStatus } from "@/integrations/supabase/types/enums";
 
 export const ChefDashboard = () => {
   const { toast } = useToast();
@@ -54,7 +55,7 @@ export const ChefDashboard = () => {
     },
   });
 
-  const handleStatusUpdate = async (id: string, newStatus: 'approved' | 'rejected' | 'processing', type: 'quotation' | 'quote') => {
+  const handleStatusUpdate = async (id: string, newStatus: QuotationStatus | QuoteStatus, type: 'quotation' | 'quote') => {
     try {
       const { error } = await supabase
         .from(type === 'quotation' ? 'quotations' : 'quotes')

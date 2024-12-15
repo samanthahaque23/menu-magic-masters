@@ -1,14 +1,13 @@
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-
-type OrderStatus = 'pending' | 'processing' | 'approved' | 'rejected';
+import { QuotationStatus } from "@/integrations/supabase/types/enums";
 
 interface OrderProgressProps {
-  status: OrderStatus;
+  status: QuotationStatus;
 }
 
 export const OrderProgress = ({ status }: OrderProgressProps) => {
-  const getProgressValue = (status: OrderStatus) => {
+  const getProgressValue = (status: QuotationStatus) => {
     switch (status) {
       case 'pending':
         return 25;
@@ -23,7 +22,7 @@ export const OrderProgress = ({ status }: OrderProgressProps) => {
     }
   };
 
-  const getStatusColor = (status: OrderStatus) => {
+  const getStatusColor = (status: QuotationStatus) => {
     switch (status) {
       case 'pending':
         return 'bg-yellow-500';

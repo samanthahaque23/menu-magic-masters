@@ -3,12 +3,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
 import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
 import { OrderProgress } from "./OrderProgress";
+import { QuotationStatus } from "@/integrations/supabase/types/enums";
+import type { Quotation } from "@/integrations/supabase/types/quotations";
+import type { Quote } from "@/integrations/supabase/types/quotes";
 
 interface QuotationTableProps {
-  quotations: any[];
-  onStatusUpdate: (id: string, status: 'approved' | 'rejected' | 'processing') => void;
+  quotations: (Quotation | Quote)[];
+  onStatusUpdate: (id: string, status: QuotationStatus) => void;
 }
 
 export const QuotationTable = ({ quotations, onStatusUpdate }: QuotationTableProps) => {
@@ -35,7 +37,7 @@ export const QuotationTable = ({ quotations, onStatusUpdate }: QuotationTablePro
               </TableCell>
               <TableCell>
                 <div>
-                  <p>Date: {format(new Date(quotation.party_date), 'PPP')}</p>
+                  <p>Date: {quotation.party_date ? format(new Date(quotation.party_date), 'PPP') : 'N/A'}</p>
                   <p>Location: {quotation.party_location}</p>
                   <p>Veg Guests: {quotation.veg_guests}</p>
                   <p>Non-veg Guests: {quotation.non_veg_guests}</p>
@@ -44,19 +46,28 @@ export const QuotationTable = ({ quotations, onStatusUpdate }: QuotationTablePro
               <TableCell>
                 <Card className="p-2">
                   <ul className="text-sm space-y-1">
-                    {quotation.quotation_items?.map((item: any, index: number) => (
-                      <li key={index}>
-                        {item.food_items?.name} x{item.quantity}
-                        <span className="text-xs ml-2 text-muted-foreground">
-                          ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
-                        </span>
-                      </li>
-                    ))}
+                    {'quotation_items' in quotation
+                      ? quotation.quotation_items?.map((item, index) => (
+                          <li key={index}>
+                            {item.food_items?.name} x{item.quantity}
+                            <span className="text-xs ml-2 text-muted-foreground">
+                              ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
+                            </span>
+                          </li>
+                        ))
+                      : quotation.quote_items?.map((item, index) => (
+                          <li key={index}>
+                            {item.food_items?.name} x{item.quantity}
+                            <span className="text-xs ml-2 text-muted-foreground">
+                              ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
+                            </span>
+                          </li>
+                        ))}
                   </ul>
                 </Card>
               </TableCell>
               <TableCell>
-                <OrderProgress status={quotation.status} />
+                <OrderProgress status={quotation.status || 'pending'} />
               </TableCell>
               <TableCell>
                 {quotation.status === 'pending' && (
