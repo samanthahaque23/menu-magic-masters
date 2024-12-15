@@ -44,14 +44,14 @@ export const QuotationList = () => {
           veg_guests,
           non_veg_guests,
           status,
-          customer:customer_id (
+          customer:profiles!quotations_customer_id_fkey (
             full_name,
             email
           ),
           quotation_items (
             id,
             quantity,
-            food_item:food_item_id (
+            food_item:food_items (
               name,
               dietary_preference,
               course_type
@@ -61,17 +61,20 @@ export const QuotationList = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as Quotation[];
     },
   });
 
   if (isLoading) return <div>Loading...</div>;
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
+    <div className="container mx-auto p-6 space-y-4">
+      <div className="flex justify-between items-center mb-6">
         <h3 className="text-2xl font-bold">Quotations</h3>
-        <Button onClick={() => navigate('/')}>
+        <Button 
+          onClick={() => navigate('/')}
+          className="bg-primary hover:bg-primary/90 text-white"
+        >
           Browse Restaurant Menu
         </Button>
       </div>
