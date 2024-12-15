@@ -129,6 +129,86 @@ export type Database = {
         }
         Relationships: []
       }
+      quotation_items: {
+        Row: {
+          created_at: string
+          food_item_id: string
+          id: string
+          quantity: number
+          quotation_id: string
+        }
+        Insert: {
+          created_at?: string
+          food_item_id: string
+          id?: string
+          quantity?: number
+          quotation_id: string
+        }
+        Update: {
+          created_at?: string
+          food_item_id?: string
+          id?: string
+          quantity?: number
+          quotation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_items_food_item_id_fkey"
+            columns: ["food_item_id"]
+            isOneToOne: false
+            referencedRelation: "food_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotation_items_quotation_id_fkey"
+            columns: ["quotation_id"]
+            isOneToOne: false
+            referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotations: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          non_veg_guests: number
+          party_date: string
+          party_location: string
+          status: Database["public"]["Enums"]["quotation_status"]
+          veg_guests: number
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          non_veg_guests?: number
+          party_date: string
+          party_location: string
+          status?: Database["public"]["Enums"]["quotation_status"]
+          veg_guests?: number
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          non_veg_guests?: number
+          party_date?: string
+          party_location?: string
+          status?: Database["public"]["Enums"]["quotation_status"]
+          veg_guests?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -139,6 +219,7 @@ export type Database = {
     Enums: {
       course_type: "starter" | "mains" | "desserts"
       dietary_preference: "vegetarian" | "non-vegetarian"
+      quotation_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never

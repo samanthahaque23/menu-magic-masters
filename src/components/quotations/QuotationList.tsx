@@ -62,10 +62,10 @@ export const QuotationList = () => {
                   <Badge
                     variant={
                       quotation.status === 'approved'
-                        ? 'success'
+                        ? 'default'
                         : quotation.status === 'rejected'
                         ? 'destructive'
-                        : 'default'
+                        : 'secondary'
                     }
                   >
                     {quotation.status}
