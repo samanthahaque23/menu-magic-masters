@@ -16,7 +16,6 @@ export type Database = {
           description: string | null
           dietary_preference: Database["public"]["Enums"]["dietary_preference"]
           id: string
-          image_url: string | null
           is_available: boolean | null
           name: string
           price: number
@@ -27,7 +26,6 @@ export type Database = {
           description?: string | null
           dietary_preference: Database["public"]["Enums"]["dietary_preference"]
           id?: string
-          image_url?: string | null
           is_available?: boolean | null
           name: string
           price: number
@@ -38,7 +36,6 @@ export type Database = {
           description?: string | null
           dietary_preference?: Database["public"]["Enums"]["dietary_preference"]
           id?: string
-          image_url?: string | null
           is_available?: boolean | null
           name?: string
           price?: number

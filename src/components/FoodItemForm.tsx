@@ -20,7 +20,6 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
     price: initialData?.price || '',
     dietary_preference: initialData?.dietary_preference || 'vegetarian',
     course_type: initialData?.course_type || 'starter',
-    image_url: initialData?.image_url || '',
   });
   const { toast } = useToast();
 
@@ -30,7 +29,6 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
 
     try {
       if (initialData) {
-        // Update existing item
         const { error } = await supabase
           .from('food_items')
           .update({
@@ -45,7 +43,6 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
           description: "Food item updated successfully",
         });
       } else {
-        // Create new item
         const { error } = await supabase
           .from('food_items')
           .insert([{
@@ -130,14 +127,6 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
             <SelectItem value="desserts">Desserts</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-
-      <div>
-        <Input
-          placeholder="Image URL"
-          value={formData.image_url}
-          onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-        />
       </div>
 
       <div className="flex justify-end space-x-2">
