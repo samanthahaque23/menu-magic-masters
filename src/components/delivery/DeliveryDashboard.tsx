@@ -30,7 +30,7 @@ export const DeliveryDashboard = () => {
         .from('quotes')
         .select(`
           *,
-          profiles (full_name, email),
+          profiles!quotes_customer_id_fkey (full_name, email),
           quote_items (
             quantity,
             food_items (
