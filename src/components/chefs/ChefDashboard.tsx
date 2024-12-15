@@ -73,7 +73,7 @@ export const ChefDashboard = () => {
     queryFn: async () => {
       if (!session?.user?.id) return [];
       
-      // First, get quotes that haven't been quoted by any chef (no entries in quotes table)
+      // First, get quotes that haven't been quoted by any chef
       const { data: quotationsData, error: quotationsError } = await supabase
         .from('quotations')
         .select(`
@@ -93,11 +93,12 @@ export const ChefDashboard = () => {
           )
         `)
         .eq('quote_status', 'pending')
-        .not('id', 'in', `(
-          select quotation_id 
-          from quotes 
-          where chef_id != '${session.user.id}'
-        )`);
+        .not('id', 'in', (
+          await supabase
+            .from('quotes')
+            .select('quotation_id')
+            .neq('chef_id', session.user.id)
+        ).data?.map(q => q.quotation_id) || []);
 
       if (quotationsError) throw quotationsError;
 
