@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import { AdminDashboard } from "./components/AdminDashboard";
 import { ChefDashboard } from "./components/chefs/ChefDashboard";
+import { RestaurantMenu } from "./components/restaurant/RestaurantMenu";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/chef" element={<ChefDashboard />} />
+          <Route path="/restaurant" element={<RestaurantMenu />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
