@@ -44,8 +44,7 @@ export const RestaurantMenu = () => {
               <span className="capitalize">{item.dietary_preference}</span>
               <span className="capitalize">{item.course_type}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <div className="text-primary font-bold">${item.price.toFixed(2)}</div>
+            <div className="flex justify-end">
               <Button 
                 onClick={() => handleAddToQuote(item)}
                 variant="secondary"
