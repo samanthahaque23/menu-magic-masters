@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -7,7 +9,38 @@ import { QuoteStatus, OrderStatus } from "@/integrations/supabase/types/enums";
 
 export const ChefDashboard = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/chef/login');
+        return;
+      }
+
+      // Verify the user is a chef
+      const { data: chefData, error: chefError } = await supabase
+        .from('chefs')
+        .select('*')
+        .eq('email', session.user.email)
+        .single();
+
+      if (chefError || !chefData) {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "You are not registered as a chef.",
+        });
+        await supabase.auth.signOut();
+        navigate('/chef/login');
+      }
+    };
+
+    checkAuth();
+  }, [navigate, toast]);
+
   const { data: quotes, isLoading: quotesLoading, refetch: refetchQuotes } = useQuery({
     queryKey: ['quotes'],
     queryFn: async () => {
@@ -68,7 +101,15 @@ export const ChefDashboard = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <h2 className="text-3xl font-bold mb-6">Chef Dashboard</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold">Chef Dashboard</h2>
+        <button
+          onClick={() => supabase.auth.signOut()}
+          className="bg-destructive text-destructive-foreground hover:bg-destructive/90 px-4 py-2 rounded"
+        >
+          Sign Out
+        </button>
+      </div>
       
       <Tabs defaultValue="quotes" className="space-y-4">
         <TabsList>
