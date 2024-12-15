@@ -43,8 +43,8 @@ export const ChefDashboard = () => {
         return;
       }
 
-      // Ensure chef has a profile
-      const { data: profileData, error: profileError } = await supabase
+      // Get or create profile
+      const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
@@ -62,6 +62,7 @@ export const ChefDashboard = () => {
           });
 
         if (insertError) {
+          console.error('Profile creation error:', insertError);
           toast({
             variant: "destructive",
             title: "Error",
