@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { FoodList } from './FoodList';
 import { CustomerList } from './customers/CustomerList';
 import { ChefList } from './chefs/ChefList';
+import { QuotationList } from './quotations/QuotationList';
 
 export const AdminDashboard = () => {
   return (
@@ -15,6 +16,7 @@ export const AdminDashboard = () => {
           <TabsTrigger value="food">Food Items</TabsTrigger>
           <TabsTrigger value="customers">Customers</TabsTrigger>
           <TabsTrigger value="chefs">Chefs</TabsTrigger>
+          <TabsTrigger value="quotations">Quotations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="food" className="mt-6">
@@ -32,6 +34,12 @@ export const AdminDashboard = () => {
         <TabsContent value="chefs" className="mt-6">
           <Card className="p-6">
             <ChefList />
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="quotations" className="mt-6">
+          <Card className="p-6">
+            <QuotationList />
           </Card>
         </TabsContent>
       </Tabs>
