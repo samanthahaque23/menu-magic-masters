@@ -12,22 +12,7 @@ export const CustomerDashboard = () => {
   const { data: orders, isLoading, refetch } = useQuery({
     queryKey: ['customer-orders'],
     queryFn: async () => {
-      const quotationsPromise = supabase
-        .from('quotations')
-        .select(`
-          *,
-          quotation_items (
-            quantity,
-            food_items (
-              name,
-              dietary_preference,
-              course_type
-            )
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      const quotesPromise = supabase
+      const { data: quotes, error } = await supabase
         .from('quotes')
         .select(`
           *,
@@ -46,26 +31,19 @@ export const CustomerDashboard = () => {
         `)
         .order('created_at', { ascending: false });
 
-      const [quotationsResult, quotesResult] = await Promise.all([
-        quotationsPromise,
-        quotesPromise
-      ]);
-
-      if (quotationsResult.error) throw quotationsResult.error;
-      if (quotesResult.error) throw quotesResult.error;
-
-      return [...(quotationsResult.data || []), ...(quotesResult.data || [])];
+      if (error) throw error;
+      return quotes || [];
     },
   });
 
-  const handleStatusUpdate = async (id: string, type: 'quotation' | 'quote', action: 'received' | 'confirm') => {
+  const handleStatusUpdate = async (id: string, action: 'received' | 'confirm') => {
     try {
       const updateData = action === 'received' 
         ? { order_status: 'received' as const }
         : { is_confirmed: true, order_status: 'confirmed' as const };
 
       const { error } = await supabase
-        .from(type === 'quotation' ? 'quotations' : 'quotes')
+        .from('quotes')
         .update(updateData)
         .eq('id', id);
 
@@ -114,23 +92,14 @@ export const CustomerDashboard = () => {
               <div>
                 <h3 className="font-semibold mb-2">Menu Items</h3>
                 <ul className="space-y-1">
-                  {'quotation_items' in order
-                    ? order.quotation_items?.map((item, index) => (
-                        <li key={index}>
-                          {item.food_items?.name} x{item.quantity}
-                          <span className="text-xs ml-2 text-muted-foreground">
-                            ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
-                          </span>
-                        </li>
-                      ))
-                    : order.quote_items?.map((item, index) => (
-                        <li key={index}>
-                          {item.food_items?.name} x{item.quantity}
-                          <span className="text-xs ml-2 text-muted-foreground">
-                            ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
-                          </span>
-                        </li>
-                      ))}
+                  {order.quote_items?.map((item, index) => (
+                    <li key={index}>
+                      {item.food_items?.name} x{item.quantity}
+                      <span className="text-xs ml-2 text-muted-foreground">
+                        ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
+                      </span>
+                    </li>
+                  ))}
                 </ul>
               </div>
               <div className="space-y-4">
@@ -141,11 +110,7 @@ export const CustomerDashboard = () => {
                 />
                 {order.order_status === 'delivered' && (
                   <Button
-                    onClick={() => handleStatusUpdate(
-                      order.id,
-                      'quotation_items' in order ? 'quotation' : 'quote',
-                      'received'
-                    )}
+                    onClick={() => handleStatusUpdate(order.id, 'received')}
                   >
                     Mark as Received
                   </Button>
@@ -154,11 +119,7 @@ export const CustomerDashboard = () => {
                   <Button
                     variant="default"
                     className="w-full"
-                    onClick={() => handleStatusUpdate(
-                      order.id,
-                      'quotation_items' in order ? 'quotation' : 'quote',
-                      'confirm'
-                    )}
+                    onClick={() => handleStatusUpdate(order.id, 'confirm')}
                   >
                     Confirm Order (${order.total_price})
                   </Button>
