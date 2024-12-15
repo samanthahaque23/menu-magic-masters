@@ -9,7 +9,72 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      food_items: {
+        Row: {
+          course_type: Database["public"]["Enums"]["course_type"]
+          created_at: string
+          description: string | null
+          dietary_preference: Database["public"]["Enums"]["dietary_preference"]
+          id: string
+          image_url: string | null
+          is_available: boolean | null
+          name: string
+          price: number
+        }
+        Insert: {
+          course_type: Database["public"]["Enums"]["course_type"]
+          created_at?: string
+          description?: string | null
+          dietary_preference: Database["public"]["Enums"]["dietary_preference"]
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          name: string
+          price: number
+        }
+        Update: {
+          course_type?: Database["public"]["Enums"]["course_type"]
+          created_at?: string
+          description?: string | null
+          dietary_preference?: Database["public"]["Enums"]["dietary_preference"]
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          role: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          role?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          role?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +83,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      course_type: "starter" | "mains" | "desserts"
+      dietary_preference: "vegetarian" | "non-vegetarian"
     }
     CompositeTypes: {
       [_ in never]: never
