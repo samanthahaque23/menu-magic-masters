@@ -4,13 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
 import { format } from "date-fns";
 import { OrderProgress } from "./OrderProgress";
-import { QuotationStatus } from "@/integrations/supabase/types/enums";
-import type { Quotation } from "@/integrations/supabase/types/quotations";
+import { QuoteStatus, OrderStatus } from "@/integrations/supabase/types/enums";
 import type { Quote } from "@/integrations/supabase/types/quotes";
 
 interface QuotationTableProps {
-  quotations: (Quotation | Quote)[];
-  onStatusUpdate: (id: string, status: QuotationStatus) => void;
+  quotations: Quote[];
+  onStatusUpdate: (id: string, quoteStatus: QuoteStatus, orderStatus?: OrderStatus) => void;
 }
 
 export const QuotationTable = ({ quotations, onStatusUpdate }: QuotationTableProps) => {
@@ -46,35 +45,29 @@ export const QuotationTable = ({ quotations, onStatusUpdate }: QuotationTablePro
               <TableCell>
                 <Card className="p-2">
                   <ul className="text-sm space-y-1">
-                    {'quotation_items' in quotation
-                      ? quotation.quotation_items?.map((item, index) => (
-                          <li key={index}>
-                            {item.food_items?.name} x{item.quantity}
-                            <span className="text-xs ml-2 text-muted-foreground">
-                              ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
-                            </span>
-                          </li>
-                        ))
-                      : quotation.quote_items?.map((item, index) => (
-                          <li key={index}>
-                            {item.food_items?.name} x{item.quantity}
-                            <span className="text-xs ml-2 text-muted-foreground">
-                              ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
-                            </span>
-                          </li>
-                        ))}
+                    {quotation.quote_items?.map((item, index) => (
+                      <li key={index}>
+                        {item.food_items?.name} x{item.quantity}
+                        <span className="text-xs ml-2 text-muted-foreground">
+                          ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
+                        </span>
+                      </li>
+                    ))}
                   </ul>
                 </Card>
               </TableCell>
               <TableCell>
-                <OrderProgress status={quotation.status || 'pending'} />
+                <OrderProgress 
+                  quoteStatus={quotation.quote_status || 'pending'} 
+                  orderStatus={quotation.order_status} 
+                />
               </TableCell>
               <TableCell>
-                {quotation.status === 'pending' && (
+                {quotation.quote_status === 'pending' && (
                   <div className="flex space-x-2">
                     <Button
                       size="sm"
-                      onClick={() => onStatusUpdate(quotation.id, 'processing')}
+                      onClick={() => onStatusUpdate(quotation.id, 'approved', 'pending_confirmation')}
                     >
                       <Check className="h-4 w-4 mr-1" />
                       Accept
@@ -89,12 +82,20 @@ export const QuotationTable = ({ quotations, onStatusUpdate }: QuotationTablePro
                     </Button>
                   </div>
                 )}
-                {quotation.status === 'processing' && (
+                {quotation.quote_status === 'approved' && quotation.order_status === 'confirmed' && (
                   <Button
                     size="sm"
-                    onClick={() => onStatusUpdate(quotation.id, 'approved')}
+                    onClick={() => onStatusUpdate(quotation.id, 'approved', 'processing')}
                   >
-                    Complete Order
+                    Start Processing
+                  </Button>
+                )}
+                {quotation.quote_status === 'approved' && quotation.order_status === 'processing' && (
+                  <Button
+                    size="sm"
+                    onClick={() => onStatusUpdate(quotation.id, 'approved', 'ready_to_deliver')}
+                  >
+                    Mark Ready
                   </Button>
                 )}
               </TableCell>
