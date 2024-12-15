@@ -1,10 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { OrderProgress } from "../chefs/OrderProgress";
-import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { DeliveryList } from "./DeliveryList";
 
 export const DeliveryDashboard = () => {
   const { toast } = useToast();
@@ -87,76 +84,10 @@ export const DeliveryDashboard = () => {
   return (
     <div className="container mx-auto py-8">
       <h2 className="text-3xl font-bold mb-6">Delivery Dashboard</h2>
-      <div className="grid gap-6">
-        {orders?.map((order) => (
-          <Card key={order.id} className="p-6">
-            <div className="grid md:grid-cols-3 gap-6">
-              <div>
-                <h3 className="font-semibold mb-2">Customer Details</h3>
-                <p>Name: {order.profiles?.full_name}</p>
-                <p>Email: {order.profiles?.email}</p>
-                <p>Location: {order.party_location}</p>
-                <p>Date: {format(new Date(order.party_date), 'PPP')}</p>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-2">Menu Items</h3>
-                <ul className="space-y-1">
-                  {'quotation_items' in order
-                    ? order.quotation_items?.map((item, index) => (
-                        <li key={index}>
-                          {item.food_items?.name} x{item.quantity}
-                          <span className="text-xs ml-2 text-muted-foreground">
-                            ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
-                          </span>
-                        </li>
-                      ))
-                    : order.quote_items?.map((item, index) => (
-                        <li key={index}>
-                          {item.food_items?.name} x{item.quantity}
-                          <span className="text-xs ml-2 text-muted-foreground">
-                            ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
-                          </span>
-                        </li>
-                      ))}
-                </ul>
-              </div>
-              <div className="space-y-4">
-                <h3 className="font-semibold mb-2">Order Status</h3>
-                <OrderProgress 
-                  quoteStatus={order.quote_status} 
-                  orderStatus={order.order_status}
-                />
-                {order.order_status !== 'delivered' && (
-                  <div className="flex gap-2">
-                    {order.order_status === 'ready_to_deliver' && (
-                      <Button 
-                        onClick={() => updateOrderStatus(
-                          order.id, 
-                          'quotation_items' in order ? 'quotation' : 'quote', 
-                          'on_the_way'
-                        )}
-                      >
-                        Start Delivery
-                      </Button>
-                    )}
-                    {order.order_status === 'on_the_way' && (
-                      <Button 
-                        onClick={() => updateOrderStatus(
-                          order.id, 
-                          'quotation_items' in order ? 'quotation' : 'quote', 
-                          'delivered'
-                        )}
-                      >
-                        Mark as Delivered
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+      <DeliveryList 
+        orders={orders || []}
+        onStatusUpdate={updateOrderStatus}
+      />
     </div>
   );
 };
