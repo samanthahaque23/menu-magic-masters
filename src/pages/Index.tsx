@@ -21,6 +21,12 @@ const Index = () => {
           <div className="space-x-4">
             <Button 
               variant="secondary"
+              onClick={() => navigate('/quotations')}
+            >
+              View Quotations
+            </Button>
+            <Button 
+              variant="secondary"
               onClick={() => navigate('/admin')}
             >
               Admin Dashboard
