@@ -43,8 +43,11 @@ export const QuotationTable = ({ quotations, onStatusUpdate }: QuotationTablePro
             <TableRow key={quotation.id}>
               <TableCell>
                 <div>
-                  <p className="font-medium">{quotation.profiles?.full_name}</p>
+                  <p className="font-medium">{quotation.profiles?.full_name || 'Unknown Customer'}</p>
                   <p className="text-sm text-muted-foreground">{quotation.profiles?.email}</p>
+                  {quotation.profiles?.phone && (
+                    <p className="text-sm text-muted-foreground">Phone: {quotation.profiles.phone}</p>
+                  )}
                 </div>
               </TableCell>
               <TableCell>
@@ -71,7 +74,7 @@ export const QuotationTable = ({ quotations, onStatusUpdate }: QuotationTablePro
               </TableCell>
               <TableCell>
                 <OrderProgress 
-                  quoteStatus={quotation.quote_status || 'pending'} 
+                  quoteStatus={quotation.quote_status} 
                   orderStatus={quotation.order_status} 
                 />
               </TableCell>
