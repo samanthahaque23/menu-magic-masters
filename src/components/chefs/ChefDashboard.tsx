@@ -120,6 +120,7 @@ export const ChefDashboard = () => {
 
       if (chefQuotesError) throw chefQuotesError;
 
+      // Combine both quotations and chef's quotes
       return [...(quotationsData || []), ...(chefQuotes || [])];
     },
     enabled: !!session?.user?.id,
