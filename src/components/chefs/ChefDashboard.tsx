@@ -65,10 +65,41 @@ export const ChefDashboard = () => {
     }
   };
 
+  const { data: { session } } = await supabase.auth.getSession();
+  
   const { data: quotes, isLoading: quotesLoading, refetch: refetchQuotes } = useQuery({
     queryKey: ['quotes'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First, get quotes that haven't been quoted by any chef (no entries in quotes table)
+      const { data: quotationsData, error: quotationsError } = await supabase
+        .from('quotations')
+        .select(`
+          *,
+          profiles!quotations_customer_id_fkey (full_name, email, phone),
+          quotation_items (
+            id,
+            quotation_id,
+            food_item_id,
+            quantity,
+            created_at,
+            food_items (
+              name,
+              dietary_preference,
+              course_type
+            )
+          )
+        `)
+        .eq('quote_status', 'pending')
+        .not('id', 'in', `(
+          select quotation_id 
+          from quotes 
+          where chef_id != '${session?.user.id}'
+        )`);
+
+      if (quotationsError) throw quotationsError;
+
+      // Then, get quotes submitted by the current chef
+      const { data: chefQuotes, error: chefQuotesError } = await supabase
         .from('quotes')
         .select(`
           *,
@@ -86,10 +117,12 @@ export const ChefDashboard = () => {
             )
           )
         `)
+        .eq('chef_id', session?.user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (chefQuotesError) throw chefQuotesError;
+
+      return [...(quotationsData || []), ...(chefQuotes || [])];
     },
   });
 
