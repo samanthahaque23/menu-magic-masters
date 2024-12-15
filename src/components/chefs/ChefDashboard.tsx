@@ -12,6 +12,7 @@ export const ChefDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [chefName, setChefName] = useState<string>("");
+  const [session, setSession] = useState<any>(null);
   
   // Check authentication on mount
   useEffect(() => {
@@ -21,6 +22,8 @@ export const ChefDashboard = () => {
         navigate('/chef/login');
         return;
       }
+
+      setSession(session);
 
       // Verify the user is a chef
       const { data: chefData, error: chefError } = await supabase
@@ -64,12 +67,12 @@ export const ChefDashboard = () => {
       });
     }
   };
-
-  const { data: { session } } = await supabase.auth.getSession();
   
   const { data: quotes, isLoading: quotesLoading, refetch: refetchQuotes } = useQuery({
-    queryKey: ['quotes'],
+    queryKey: ['quotes', session?.user?.id],
     queryFn: async () => {
+      if (!session?.user?.id) return [];
+      
       // First, get quotes that haven't been quoted by any chef (no entries in quotes table)
       const { data: quotationsData, error: quotationsError } = await supabase
         .from('quotations')
@@ -93,7 +96,7 @@ export const ChefDashboard = () => {
         .not('id', 'in', `(
           select quotation_id 
           from quotes 
-          where chef_id != '${session?.user.id}'
+          where chef_id != '${session.user.id}'
         )`);
 
       if (quotationsError) throw quotationsError;
@@ -117,13 +120,14 @@ export const ChefDashboard = () => {
             )
           )
         `)
-        .eq('chef_id', session?.user.id)
+        .eq('chef_id', session.user.id)
         .order('created_at', { ascending: false });
 
       if (chefQuotesError) throw chefQuotesError;
 
       return [...(quotationsData || []), ...(chefQuotes || [])];
     },
+    enabled: !!session?.user?.id,
   });
 
   const handleStatusUpdate = async (id: string, quoteStatus: QuoteStatus, orderStatus?: OrderStatus, price?: number) => {
