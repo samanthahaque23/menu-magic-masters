@@ -26,7 +26,7 @@ export const DeliveryDashboard = () => {
             )
           )
         `)
-        .eq('status', 'ready_to_deliver')
+        .eq('order_status', 'ready_to_deliver')
         .order('created_at', { ascending: false });
 
       const quotesPromise = supabase
@@ -43,7 +43,7 @@ export const DeliveryDashboard = () => {
             )
           )
         `)
-        .eq('status', 'ready_to_deliver')
+        .eq('order_status', 'ready_to_deliver')
         .order('created_at', { ascending: false });
 
       const [quotationsResult, quotesResult] = await Promise.all([
@@ -62,14 +62,14 @@ export const DeliveryDashboard = () => {
     try {
       const { error } = await supabase
         .from(type === 'quotation' ? 'quotations' : 'quotes')
-        .update({ status: newStatus })
+        .update({ order_status: newStatus })
         .eq('id', id);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: `Order marked as ${newStatus}`,
+        description: `Order marked as ${newStatus.replace(/_/g, ' ')}`,
       });
 
       refetch();
@@ -122,9 +122,12 @@ export const DeliveryDashboard = () => {
               </div>
               <div className="space-y-4">
                 <h3 className="font-semibold mb-2">Order Status</h3>
-                <OrderProgress status={order.status} />
+                <OrderProgress 
+                  quoteStatus={order.quote_status} 
+                  orderStatus={order.order_status}
+                />
                 <div className="flex gap-2">
-                  {order.status === 'ready_to_deliver' && (
+                  {order.order_status === 'ready_to_deliver' && (
                     <Button 
                       onClick={() => updateOrderStatus(
                         order.id, 
@@ -135,7 +138,7 @@ export const DeliveryDashboard = () => {
                       Start Delivery
                     </Button>
                   )}
-                  {order.status === 'on_the_way' && (
+                  {order.order_status === 'on_the_way' && (
                     <Button 
                       onClick={() => updateOrderStatus(
                         order.id, 
