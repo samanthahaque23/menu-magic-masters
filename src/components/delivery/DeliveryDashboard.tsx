@@ -6,16 +6,17 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
-export const CustomerDashboard = () => {
+export const DeliveryDashboard = () => {
   const { toast } = useToast();
 
   const { data: orders, isLoading, refetch } = useQuery({
-    queryKey: ['customer-orders'],
+    queryKey: ['delivery-orders'],
     queryFn: async () => {
       const quotationsPromise = supabase
         .from('quotations')
         .select(`
           *,
+          profiles (full_name, email),
           quotation_items (
             quantity,
             food_items (
@@ -25,12 +26,14 @@ export const CustomerDashboard = () => {
             )
           )
         `)
+        .eq('status', 'ready_to_deliver')
         .order('created_at', { ascending: false });
 
       const quotesPromise = supabase
         .from('quotes')
         .select(`
           *,
+          profiles (full_name, email),
           quote_items (
             quantity,
             food_items (
@@ -40,6 +43,7 @@ export const CustomerDashboard = () => {
             )
           )
         `)
+        .eq('status', 'ready_to_deliver')
         .order('created_at', { ascending: false });
 
       const [quotationsResult, quotesResult] = await Promise.all([
@@ -54,18 +58,18 @@ export const CustomerDashboard = () => {
     },
   });
 
-  const markAsReceived = async (id: string, type: 'quotation' | 'quote') => {
+  const updateOrderStatus = async (id: string, type: 'quotation' | 'quote', newStatus: 'on_the_way' | 'delivered') => {
     try {
       const { error } = await supabase
         .from(type === 'quotation' ? 'quotations' : 'quotes')
-        .update({ status: 'received' })
+        .update({ status: newStatus })
         .eq('id', id);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Order marked as received",
+        description: `Order marked as ${newStatus}`,
       });
 
       refetch();
@@ -82,19 +86,17 @@ export const CustomerDashboard = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <h2 className="text-3xl font-bold mb-6">My Orders</h2>
+      <h2 className="text-3xl font-bold mb-6">Delivery Dashboard</h2>
       <div className="grid gap-6">
-        {orders?.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        ).map((order) => (
+        {orders?.map((order) => (
           <Card key={order.id} className="p-6">
             <div className="grid md:grid-cols-3 gap-6">
               <div>
-                <h3 className="font-semibold mb-2">Party Details</h3>
-                <p>Date: {format(new Date(order.party_date), 'PPP')}</p>
+                <h3 className="font-semibold mb-2">Customer Details</h3>
+                <p>Name: {order.profiles?.full_name}</p>
+                <p>Email: {order.profiles?.email}</p>
                 <p>Location: {order.party_location}</p>
-                <p>Vegetarian Guests: {order.veg_guests}</p>
-                <p>Non-vegetarian Guests: {order.non_veg_guests}</p>
+                <p>Date: {format(new Date(order.party_date), 'PPP')}</p>
               </div>
               <div>
                 <h3 className="font-semibold mb-2">Menu Items</h3>
@@ -121,16 +123,30 @@ export const CustomerDashboard = () => {
               <div className="space-y-4">
                 <h3 className="font-semibold mb-2">Order Status</h3>
                 <OrderProgress status={order.status} />
-                {order.status === 'delivered' && (
-                  <Button
-                    onClick={() => markAsReceived(
-                      order.id,
-                      'quotation_items' in order ? 'quotation' : 'quote'
-                    )}
-                  >
-                    Mark as Received
-                  </Button>
-                )}
+                <div className="flex gap-2">
+                  {order.status === 'ready_to_deliver' && (
+                    <Button 
+                      onClick={() => updateOrderStatus(
+                        order.id, 
+                        'quotation_items' in order ? 'quotation' : 'quote', 
+                        'on_the_way'
+                      )}
+                    >
+                      Start Delivery
+                    </Button>
+                  )}
+                  {order.status === 'on_the_way' && (
+                    <Button 
+                      onClick={() => updateOrderStatus(
+                        order.id, 
+                        'quotation_items' in order ? 'quotation' : 'quote', 
+                        'delivered'
+                      )}
+                    >
+                      Mark as Delivered
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </Card>

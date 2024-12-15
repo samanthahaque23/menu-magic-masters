@@ -299,8 +299,24 @@ export type Database = {
     Enums: {
       course_type: "starter" | "mains" | "desserts"
       dietary_preference: "vegetarian" | "non-vegetarian"
-      quotation_status: "pending" | "approved" | "rejected" | "processing"
-      quote_status: "pending" | "approved" | "rejected" | "processing"
+      quotation_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "processing"
+        | "ready_to_deliver"
+        | "on_the_way"
+        | "delivered"
+        | "received"
+      quote_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "processing"
+        | "ready_to_deliver"
+        | "on_the_way"
+        | "delivered"
+        | "received"
     }
     CompositeTypes: {
       [_ in never]: never

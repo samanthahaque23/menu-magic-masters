@@ -8,6 +8,7 @@ import { AdminDashboard } from "./components/AdminDashboard";
 import { ChefDashboard } from "./components/chefs/ChefDashboard";
 import { RestaurantMenu } from "./components/restaurant/RestaurantMenu";
 import { CustomerDashboard } from "./components/customers/CustomerDashboard";
+import { DeliveryDashboard } from "./components/delivery/DeliveryDashboard";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/chef" element={<ChefDashboard />} />
           <Route path="/restaurant" element={<RestaurantMenu />} />
           <Route path="/customer" element={<CustomerDashboard />} />
+          <Route path="/delivery" element={<DeliveryDashboard />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
