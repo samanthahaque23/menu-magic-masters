@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { Database } from "@/integrations/supabase/types";
 
 type Quotation = {
@@ -29,6 +31,7 @@ type Quotation = {
 };
 
 export const QuotationList = () => {
+  const navigate = useNavigate();
   const { data: quotations, isLoading } = useQuery<Quotation[]>({
     queryKey: ['quotations'],
     queryFn: async () => {
@@ -66,7 +69,12 @@ export const QuotationList = () => {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-2xl font-bold">Quotations</h3>
+      <div className="flex justify-between items-center">
+        <h3 className="text-2xl font-bold">Quotations</h3>
+        <Button onClick={() => navigate('/')}>
+          Browse Restaurant Menu
+        </Button>
+      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
