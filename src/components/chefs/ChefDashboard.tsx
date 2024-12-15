@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,7 @@ import { QuoteStatus, OrderStatus } from "@/integrations/supabase/types/enums";
 export const ChefDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [chefName, setChefName] = useState<string>("");
   
   // Check authentication on mount
   useEffect(() => {
@@ -36,6 +37,8 @@ export const ChefDashboard = () => {
         });
         await supabase.auth.signOut();
         navigate('/chef/login');
+      } else {
+        setChefName(chefData.name);
       }
     };
 
@@ -124,12 +127,15 @@ export const ChefDashboard = () => {
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold">Chef Dashboard</h2>
-        <Button
-          variant="destructive"
-          onClick={handleSignOut}
-        >
-          Sign Out
-        </Button>
+        <div className="flex items-center gap-4">
+          <span className="text-muted-foreground">Welcome, {chefName}</span>
+          <Button
+            variant="destructive"
+            onClick={handleSignOut}
+          >
+            Sign Out
+          </Button>
+        </div>
       </div>
       
       <Tabs defaultValue="quotes" className="space-y-4">
