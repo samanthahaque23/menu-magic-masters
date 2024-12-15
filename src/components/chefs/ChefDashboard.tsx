@@ -96,19 +96,6 @@ export const ChefDashboard = () => {
 
       if (quotationsError) throw quotationsError;
 
-      // Get all quotes from other chefs
-      const { data: otherChefQuotes, error: otherChefQuotesError } = await supabase
-        .from('quotes')
-        .select('id')
-        .neq('chef_id', session.user.id);
-
-      if (otherChefQuotesError) throw otherChefQuotesError;
-
-      // Filter out quotations that other chefs have already quoted
-      const availableQuotations = quotationsData?.filter(quotation => 
-        !otherChefQuotes?.some(quote => quote.id === quotation.id)
-      ) || [];
-
       // Then, get quotes submitted by the current chef
       const { data: chefQuotes, error: chefQuotesError } = await supabase
         .from('quotes')
@@ -133,7 +120,7 @@ export const ChefDashboard = () => {
 
       if (chefQuotesError) throw chefQuotesError;
 
-      return [...availableQuotations, ...(chefQuotes || [])];
+      return [...(quotationsData || []), ...(chefQuotes || [])];
     },
     enabled: !!session?.user?.id,
   });
