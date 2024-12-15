@@ -209,6 +209,74 @@ export type Database = {
           },
         ]
       }
+      quote_items: {
+        Row: {
+          created_at: string
+          food_item_id: string | null
+          id: string
+          quantity: number | null
+          quote_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          food_item_id?: string | null
+          id?: string
+          quantity?: number | null
+          quote_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          food_item_id?: string | null
+          id?: string
+          quantity?: number | null
+          quote_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_items_food_item_id_fkey"
+            columns: ["food_item_id"]
+            isOneToOne: false
+            referencedRelation: "food_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          id: string
+          status: Database["public"]["Enums"]["quote_status"] | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["quote_status"] | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["quote_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -220,6 +288,7 @@ export type Database = {
       course_type: "starter" | "mains" | "desserts"
       dietary_preference: "vegetarian" | "non-vegetarian"
       quotation_status: "pending" | "approved" | "rejected"
+      quote_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never

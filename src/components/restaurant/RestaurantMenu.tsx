@@ -3,10 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, ShoppingCart } from "lucide-react";
+import { useState } from "react";
+import { QuoteList } from "./QuoteList";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 export const RestaurantMenu = () => {
   const { toast } = useToast();
+  const [isQuoteOpen, setIsQuoteOpen] = useState(false);
+  const [quoteItems, setQuoteItems] = useState<Array<{ foodItem: any; quantity: number }>>([]);
+
   const { data: foodItems, isLoading } = useQuery({
     queryKey: ['food-items'],
     queryFn: async () => {
@@ -21,10 +27,20 @@ export const RestaurantMenu = () => {
   });
 
   const handleAddToQuote = (item: any) => {
-    // TODO: Implement add to quote functionality
+    const existingItem = quoteItems.find(qi => qi.foodItem.id === item.id);
+    if (existingItem) {
+      setQuoteItems(quoteItems.map(qi => 
+        qi.foodItem.id === item.id 
+          ? { ...qi, quantity: qi.quantity + 1 }
+          : qi
+      ));
+    } else {
+      setQuoteItems([...quoteItems, { foodItem: item, quantity: 1 }]);
+    }
+    
     toast({
-      title: "Coming soon!",
-      description: "Add to quote functionality will be implemented soon.",
+      title: "Added to quote",
+      description: `${item.name} has been added to your quote.`,
     });
   };
 
@@ -32,7 +48,24 @@ export const RestaurantMenu = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-8">Restaurant Menu</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Restaurant Menu</h1>
+        <Sheet open={isQuoteOpen} onOpenChange={setIsQuoteOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <ShoppingCart className="h-4 w-4" />
+              Quote List ({quoteItems.reduce((acc, item) => acc + item.quantity, 0)})
+            </Button>
+          </SheetTrigger>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Your Quote</SheetTitle>
+            </SheetHeader>
+            <QuoteList items={quoteItems} setItems={setQuoteItems} />
+          </SheetContent>
+        </Sheet>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {foodItems?.map((item) => (
           <Card key={item.id} className="p-6">
