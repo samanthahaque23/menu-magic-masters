@@ -1,14 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { QuotationTableRow } from "./QuotationTableRow";
 
 export const QuotationList = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch quotes with explicit relationship specification
   const { data: quotes, isLoading } = useQuery({
     queryKey: ['admin-quotes'],
     queryFn: async () => {
@@ -16,7 +15,11 @@ export const QuotationList = () => {
         .from('quotes')
         .select(`
           *,
-          profiles!quotes_customer_id_fkey (full_name, email),
+          profiles!quotes_customer_id_fkey (
+            full_name,
+            email,
+            role
+          ),
           quote_items (
             quantity,
             food_items (
@@ -24,32 +27,42 @@ export const QuotationList = () => {
               dietary_preference,
               course_type
             )
+          ),
+          chef_quotes (
+            id,
+            chef_id,
+            price,
+            quote_status,
+            profiles!chef_quotes_chef_id_fkey (
+              full_name,
+              role
+            )
           )
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching quotes:', error);
+        throw error;
+      }
+      
+      // Filter out quotes that don't have proper customer profiles
+      return data?.filter(quote => quote.profiles?.role === 'customer') || [];
     },
   });
 
   const deleteQuoteMutation = useMutation({
     mutationFn: async ({ id }: { id: string }) => {
-      // First delete the related items
-      const { error: itemsError } = await supabase
-        .from('quote_items')
-        .delete()
-        .eq('quote_id', id);
+      const { error } = await supabase.rpc('delete_quote_cascade', {
+        quote_id: id
+      });
       
-      if (itemsError) throw itemsError;
+      if (error) {
+        console.error('Error in delete_quote_cascade:', error);
+        throw error;
+      }
 
-      // Then delete the main record
-      const { error } = await supabase
-        .from('quotes')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
+      return { id };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-quotes'] });
@@ -59,6 +72,7 @@ export const QuotationList = () => {
       });
     },
     onError: (error: any) => {
+      console.error('Delete error:', error);
       toast({
         variant: "destructive",
         title: "Error",

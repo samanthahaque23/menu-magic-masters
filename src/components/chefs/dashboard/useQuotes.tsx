@@ -1,27 +1,30 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { QuoteStatus, OrderStatus } from "@/integrations/supabase/types/enums";
+import { Session } from "@supabase/supabase-js";
 
-export const useQuotes = (session: any) => {
+export const useQuotes = (session: Session | null) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const { data: quotes, isLoading, refetch } = useQuery({
-    queryKey: ['quotes', session?.user?.id],
+  const { data: quotes, isLoading } = useQuery({
+    queryKey: ['chef-quotes', session?.user?.id],
     queryFn: async () => {
-      if (!session?.user?.id) return [];
-      
-      const { data: quotesData, error: quotesError } = await supabase
+      if (!session?.user?.id) return null;
+
+      const { data: quotes, error } = await supabase
         .from('quotes')
         .select(`
           *,
-          profiles!quotes_customer_id_fkey (full_name, email, phone),
+          profiles!quotes_customer_id_fkey (
+            full_name,
+            email,
+            phone,
+            role
+          ),
           quote_items (
-            id,
-            quote_id,
-            food_item_id,
             quantity,
-            created_at,
             food_items (
               name,
               dietary_preference,
@@ -33,74 +36,70 @@ export const useQuotes = (session: any) => {
             chef_id,
             price,
             quote_status,
-            is_visible_to_customer
+            profiles!chef_quotes_chef_id_fkey (
+              full_name
+            )
           )
         `)
-        .or(`quote_status.eq.pending,chef_id.eq.${session.user.id}`)
+        .or(`chef_id.eq.${session.user.id},and(quote_status.eq.pending,chef_id.is.null)`)
         .order('created_at', { ascending: false });
 
-      if (quotesError) throw quotesError;
-      return quotesData || [];
+      if (error) throw error;
+
+      // Filter quotes to only show those from customers and relevant to the chef
+      return quotes?.filter(quote => {
+        // Show if it's assigned to this chef
+        if (quote.chef_id === session.user.id) return true;
+        // Show if it's pending and has no chef assigned
+        if (quote.quote_status === 'pending' && !quote.chef_id) return true;
+        // Show if this chef has submitted a quote
+        if (quote.chef_quotes?.some(q => q.chef_id === session.user.id)) return true;
+        return false;
+      }).filter(quote => 
+        // Ensure we only show quotes from customers
+        quote.profiles?.role === 'customer'
+      ) || [];
     },
     enabled: !!session?.user?.id,
   });
 
   const handleQuoteSubmission = async (quoteId: string, price: number) => {
     try {
+      // First check if this chef has already submitted a quote
+      const { data: existingQuotes, error: checkError } = await supabase
+        .from('chef_quotes')
+        .select('id')
+        .eq('quote_id', quoteId)
+        .eq('chef_id', session.user.id);
+
+      if (checkError) throw checkError;
+
+      if (existingQuotes && existingQuotes.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You have already submitted a quote for this request",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('chef_quotes')
         .insert({
           quote_id: quoteId,
           chef_id: session.user.id,
           price: price,
-          is_visible_to_customer: true,
-          quote_status: 'pending'
+          is_visible_to_customer: true
         });
-
-      if (error) {
-        if (error.code === '23505') {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "You have already submitted a quote for this order.",
-          });
-        } else {
-          throw error;
-        }
-      } else {
-        toast({
-          title: "Success",
-          description: "Quote submitted successfully",
-        });
-        refetch();
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    }
-  };
-
-  const handleStatusUpdate = async (id: string, quoteStatus: QuoteStatus, orderStatus?: OrderStatus) => {
-    try {
-      const { error } = await supabase
-        .from('quotes')
-        .update({ 
-          quote_status: quoteStatus,
-          ...(orderStatus && { order_status: orderStatus })
-        })
-        .eq('id', id);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: `Quote status updated successfully`,
+        description: "Quote submitted successfully",
       });
-      
-      refetch();
+
+      queryClient.invalidateQueries({ queryKey: ['chef-quotes'] });
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -110,5 +109,43 @@ export const useQuotes = (session: any) => {
     }
   };
 
-  return { quotes, isLoading, handleQuoteSubmission, handleStatusUpdate };
+  const handleStatusUpdate = async (
+    quoteId: string, 
+    quoteStatus: QuoteStatus,
+    orderStatus?: OrderStatus
+  ) => {
+    try {
+      const updateData: any = { quote_status: quoteStatus };
+      if (orderStatus) {
+        updateData.order_status = orderStatus;
+      }
+
+      const { error } = await supabase
+        .from('quotes')
+        .update(updateData)
+        .eq('id', quoteId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Status updated successfully",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['chef-quotes'] });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
+  };
+
+  return {
+    quotes,
+    isLoading,
+    handleQuoteSubmission,
+    handleStatusUpdate,
+  };
 };

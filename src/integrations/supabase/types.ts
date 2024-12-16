@@ -278,7 +278,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      delete_quote_cascade: {
+        Args: {
+          quote_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       course_type: "starter" | "mains" | "desserts"

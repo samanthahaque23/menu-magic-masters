@@ -4,16 +4,36 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { PlusCircle, ShoppingCart } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QuoteList } from "./QuoteList";
 import { QuoteForm } from "./QuoteForm";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Auth } from '@supabase/auth-ui-react';
+import { ThemeSupa } from '@supabase/auth-ui-shared';
 
 export const RestaurantMenu = () => {
   const { toast } = useToast();
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
   const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [quoteItems, setQuoteItems] = useState<Array<{ foodItem: any; quantity: number }>>([]);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        setShowAuthDialog(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const { data: foodItems, isLoading } = useQuery({
     queryKey: ['food-items'],
@@ -29,6 +49,15 @@ export const RestaurantMenu = () => {
   });
 
   const handleAddToQuote = (item: any) => {
+    if (!user) {
+      setShowAuthDialog(true);
+      toast({
+        title: "Please sign in",
+        description: "You need to sign in to create a quote",
+      });
+      return;
+    }
+
     const existingItem = quoteItems.find(qi => qi.foodItem.id === item.id);
     if (existingItem) {
       setQuoteItems(quoteItems.map(qi => 
@@ -62,34 +91,78 @@ export const RestaurantMenu = () => {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Restaurant Menu</h1>
-        <Sheet open={isQuoteOpen} onOpenChange={setIsQuoteOpen}>
-          <SheetTrigger asChild>
-            <Button variant="outline" className="gap-2">
-              <ShoppingCart className="h-4 w-4" />
-              Quote List ({quoteItems.reduce((acc, item) => acc + item.quantity, 0)})
-            </Button>
-          </SheetTrigger>
-          <SheetContent className="overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>Your Quote</SheetTitle>
-            </SheetHeader>
-            {showQuoteForm ? (
-              <QuoteForm items={quoteItems} onSuccess={handleQuoteSuccess} />
-            ) : (
-              <div className="space-y-4">
-                <QuoteList items={quoteItems} setItems={setQuoteItems} />
-                {quoteItems.length > 0 && (
-                  <Button 
-                    className="w-full" 
-                    onClick={() => setShowQuoteForm(true)}
-                  >
-                    Proceed to Quote Details
-                  </Button>
-                )}
-              </div>
-            )}
-          </SheetContent>
-        </Sheet>
+        <div className="flex gap-4">
+          {!user && (
+            <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline">Sign In / Sign Up</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Authentication</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <Auth
+                    supabaseClient={supabase}
+                    appearance={{ 
+                      theme: ThemeSupa,
+                      variables: {
+                        default: {
+                          colors: {
+                            brand: 'rgb(var(--foreground))',
+                            brandAccent: 'rgb(var(--foreground))',
+                          },
+                        },
+                      },
+                    }}
+                    theme="light"
+                    providers={[]}
+                    localization={{
+                      variables: {
+                        sign_up: {
+                          password_label: "Password (min. 6 characters)",
+                          password_input_placeholder: "Password (min. 6 characters)"
+                        },
+                        sign_in: {
+                          password_label: "Password",
+                          password_input_placeholder: "Your password"
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+          <Sheet open={isQuoteOpen} onOpenChange={setIsQuoteOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <ShoppingCart className="h-4 w-4" />
+                Quote List ({quoteItems.reduce((acc, item) => acc + item.quantity, 0)})
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Your Quote</SheetTitle>
+              </SheetHeader>
+              {showQuoteForm ? (
+                <QuoteForm items={quoteItems} onSuccess={handleQuoteSuccess} />
+              ) : (
+                <div className="space-y-4">
+                  <QuoteList items={quoteItems} setItems={setQuoteItems} />
+                  {quoteItems.length > 0 && (
+                    <Button 
+                      className="w-full" 
+                      onClick={() => setShowQuoteForm(true)}
+                    >
+                      Proceed to Quote Details
+                    </Button>
+                  )}
+                </div>
+              )}
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

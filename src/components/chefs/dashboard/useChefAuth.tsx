@@ -24,9 +24,11 @@ export const useChefAuth = () => {
           .from('chefs')
           .select('*')
           .eq('email', session.user.email)
-          .single();
+          .maybeSingle();
 
-        if (chefError || !chefData) {
+        if (chefError) throw chefError;
+
+        if (!chefData) {
           toast({
             variant: "destructive",
             title: "Access Denied",

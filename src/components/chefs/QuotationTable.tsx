@@ -103,7 +103,7 @@ export const QuotationTable = ({
                 />
               </TableCell>
               <TableCell>
-                {quotation.quote_status === 'pending' && (
+                {quotation.quote_status === 'pending' && !quotation.chef_quotes?.some(q => q.chef_id === quotation.chef_id) && (
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <Input
