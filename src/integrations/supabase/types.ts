@@ -219,6 +219,7 @@ export type Database = {
           party_date: string | null
           party_location: string | null
           quote_status: Database["public"]["Enums"]["quote_status"] | null
+          total_price: number | null
           veg_guests: number | null
         }
         Insert: {
@@ -232,6 +233,7 @@ export type Database = {
           party_date?: string | null
           party_location?: string | null
           quote_status?: Database["public"]["Enums"]["quote_status"] | null
+          total_price?: number | null
           veg_guests?: number | null
         }
         Update: {
@@ -245,6 +247,7 @@ export type Database = {
           party_date?: string | null
           party_location?: string | null
           quote_status?: Database["public"]["Enums"]["quote_status"] | null
+          total_price?: number | null
           veg_guests?: number | null
         }
         Relationships: [
