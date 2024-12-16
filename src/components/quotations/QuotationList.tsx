@@ -8,7 +8,6 @@ export const QuotationList = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch quotes with explicit relationship specification
   const { data: quotes, isLoading } = useQuery({
     queryKey: ['admin-quotes'],
     queryFn: async () => {
@@ -35,7 +34,15 @@ export const QuotationList = () => {
 
   const deleteQuoteMutation = useMutation({
     mutationFn: async ({ id }: { id: string }) => {
-      // First delete the related items
+      // First delete chef quotes
+      const { error: chefQuotesError } = await supabase
+        .from('chef_quotes')
+        .delete()
+        .eq('quote_id', id);
+      
+      if (chefQuotesError) throw chefQuotesError;
+
+      // Then delete quote items
       const { error: itemsError } = await supabase
         .from('quote_items')
         .delete()
@@ -43,13 +50,13 @@ export const QuotationList = () => {
       
       if (itemsError) throw itemsError;
 
-      // Then delete the main record
-      const { error } = await supabase
+      // Finally delete the main quote
+      const { error: quoteError } = await supabase
         .from('quotes')
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (quoteError) throw quoteError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-quotes'] });
@@ -59,6 +66,7 @@ export const QuotationList = () => {
       });
     },
     onError: (error: any) => {
+      console.error('Delete error:', error);
       toast({
         variant: "destructive",
         title: "Error",
