@@ -33,26 +33,15 @@ export const useQuotes = (session: any) => {
             chef_id,
             price,
             quote_status,
-            is_visible_to_customer
+            is_visible_to_customer,
+            profiles!chef_quotes_chef_id_fkey (full_name)
           )
         `)
-        .or(`quote_status.eq.pending,and(chef_id.eq.${session.user.id},quote_status.neq.rejected)`)
-        .order('created_at', { ascending: false });
+        .or(`quote_status.eq.pending,and(chef_id.eq.${session.user.id},quote_status.neq.rejected)`);
 
       if (quotesError) throw quotesError;
       
-      // Show quotes that are either:
-      // 1. Pending and chef hasn't submitted a quote yet
-      // 2. Any quote where this chef has submitted a quote
-      const filteredQuotes = quotesData?.filter(quote => {
-        const hasSubmittedQuote = quote.chef_quotes?.some(
-          chefQuote => chefQuote.chef_id === session.user.id
-        );
-        return (quote.quote_status === 'pending' && !hasSubmittedQuote) || 
-               hasSubmittedQuote;
-      });
-      
-      return filteredQuotes || [];
+      return quotesData || [];
     },
     enabled: !!session?.user?.id,
   });

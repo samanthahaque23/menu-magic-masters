@@ -23,6 +23,13 @@ export const QuotationList = () => {
               dietary_preference,
               course_type
             )
+          ),
+          chef_quotes (
+            id,
+            chef_id,
+            price,
+            quote_status,
+            profiles!chef_quotes_chef_id_fkey (full_name)
           )
         `)
         .order('created_at', { ascending: false });
