@@ -36,7 +36,7 @@ export const useQuotes = (session: any) => {
             is_visible_to_customer
           )
         `)
-        .or(`quote_status.eq.pending,chef_id.eq.${session.user.id}`)
+        .or(`quote_status.eq.pending,and(chef_id.eq.${session.user.id},quote_status.neq.rejected)`)
         .order('created_at', { ascending: false });
 
       if (quotesError) throw quotesError;
