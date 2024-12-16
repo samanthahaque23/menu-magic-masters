@@ -3,17 +3,40 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { PlusCircle, ShoppingCart } from "lucide-react";
-import { useState } from "react";
+import { PlusCircle, ShoppingCart, LogIn, UserPlus } from "lucide-react";
+import { useState, useEffect } from "react";
 import { QuoteList } from "./QuoteList";
 import { QuoteForm } from "./QuoteForm";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Auth } from '@supabase/auth-ui-react';
+import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { useNavigate } from "react-router-dom";
 
 export const RestaurantMenu = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
   const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [quoteItems, setQuoteItems] = useState<Array<{ foodItem: any; quantity: number }>>([]);
+  const [showAuth, setShowAuth] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    // Check current auth status
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        setShowAuth(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const { data: foodItems, isLoading } = useQuery({
     queryKey: ['food-items'],
@@ -29,6 +52,15 @@ export const RestaurantMenu = () => {
   });
 
   const handleAddToQuote = (item: any) => {
+    if (!user) {
+      setShowAuth(true);
+      toast({
+        title: "Please sign in",
+        description: "You need to sign in to create a quote",
+      });
+      return;
+    }
+
     const existingItem = quoteItems.find(qi => qi.foodItem.id === item.id);
     if (existingItem) {
       setQuoteItems(quoteItems.map(qi => 
@@ -54,6 +86,15 @@ export const RestaurantMenu = () => {
       title: "Quote Submitted",
       description: "Your quote has been submitted successfully.",
     });
+    navigate('/customer');
+  };
+
+  const handleViewOrders = () => {
+    if (!user) {
+      setShowAuth(true);
+      return;
+    }
+    navigate('/customer');
   };
 
   if (isLoading) return <div className="text-center p-8">Loading...</div>;
@@ -62,35 +103,51 @@ export const RestaurantMenu = () => {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Restaurant Menu</h1>
-        <Sheet open={isQuoteOpen} onOpenChange={setIsQuoteOpen}>
-          <SheetTrigger asChild>
-            <Button variant="outline" className="gap-2">
-              <ShoppingCart className="h-4 w-4" />
-              Quote List ({quoteItems.reduce((acc, item) => acc + item.quantity, 0)})
-            </Button>
-          </SheetTrigger>
-          <SheetContent className="overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>Your Quote</SheetTitle>
-            </SheetHeader>
-            {showQuoteForm ? (
-              <QuoteForm items={quoteItems} onSuccess={handleQuoteSuccess} />
-            ) : (
-              <div className="space-y-4">
-                <QuoteList items={quoteItems} setItems={setQuoteItems} />
-                {quoteItems.length > 0 && (
-                  <Button 
-                    className="w-full" 
-                    onClick={() => setShowQuoteForm(true)}
-                  >
-                    Proceed to Quote Details
-                  </Button>
-                )}
-              </div>
-            )}
-          </SheetContent>
-        </Sheet>
+        <div className="flex gap-4">
+          <Button variant="outline" onClick={handleViewOrders}>
+            View Orders
+          </Button>
+          <Sheet open={isQuoteOpen} onOpenChange={setIsQuoteOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <ShoppingCart className="h-4 w-4" />
+                Quote List ({quoteItems.reduce((acc, item) => acc + item.quantity, 0)})
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Your Quote</SheetTitle>
+              </SheetHeader>
+              {showQuoteForm ? (
+                <QuoteForm items={quoteItems} onSuccess={handleQuoteSuccess} />
+              ) : (
+                <div className="space-y-4">
+                  <QuoteList items={quoteItems} setItems={setQuoteItems} />
+                  {quoteItems.length > 0 && (
+                    <Button 
+                      className="w-full" 
+                      onClick={() => setShowQuoteForm(true)}
+                    >
+                      Proceed to Quote Details
+                    </Button>
+                  )}
+                </div>
+              )}
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
+
+      {showAuth && (
+        <Card className="p-6 mb-8">
+          <Auth
+            supabaseClient={supabase}
+            appearance={{ theme: ThemeSupa }}
+            providers={[]}
+            theme="light"
+          />
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {foodItems?.map((item) => (
