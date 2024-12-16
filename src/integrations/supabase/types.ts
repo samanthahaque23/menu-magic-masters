@@ -14,24 +14,30 @@ export type Database = {
           chef_id: string | null
           created_at: string
           id: string
+          is_visible_to_customer: boolean | null
           price: number
           quote_id: string | null
+          quote_status: Database["public"]["Enums"]["quote_status"] | null
           status: string | null
         }
         Insert: {
           chef_id?: string | null
           created_at?: string
           id?: string
+          is_visible_to_customer?: boolean | null
           price: number
           quote_id?: string | null
+          quote_status?: Database["public"]["Enums"]["quote_status"] | null
           status?: string | null
         }
         Update: {
           chef_id?: string | null
           created_at?: string
           id?: string
+          is_visible_to_customer?: boolean | null
           price?: number
           quote_id?: string | null
+          quote_status?: Database["public"]["Enums"]["quote_status"] | null
           status?: string | null
         }
         Relationships: [
