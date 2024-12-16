@@ -15,7 +15,11 @@ export const QuotationList = () => {
         .from('quotes')
         .select(`
           *,
-          profiles!quotes_customer_id_fkey (full_name, email),
+          profiles!quotes_customer_id_fkey (
+            full_name,
+            email,
+            role
+          ),
           quote_items (
             quantity,
             food_items (
@@ -29,13 +33,22 @@ export const QuotationList = () => {
             chef_id,
             price,
             quote_status,
-            profiles!chef_quotes_chef_id_fkey (full_name)
+            profiles!chef_quotes_chef_id_fkey (
+              full_name,
+              role
+            )
           )
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching quotes:', error);
+        throw error;
+      }
+      
+      // Filter out quotes that don't have proper customer profiles
+      const validQuotes = data?.filter(quote => quote.profiles?.role === 'customer');
+      return validQuotes || [];
     },
   });
 
