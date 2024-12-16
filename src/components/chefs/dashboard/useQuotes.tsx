@@ -41,12 +41,15 @@ export const useQuotes = (session: any) => {
 
       if (quotesError) throw quotesError;
       
-      // Filter out quotes where the current chef has already submitted a quote
+      // Show quotes that are either:
+      // 1. Pending and chef hasn't submitted a quote yet
+      // 2. Any quote where this chef has submitted a quote
       const filteredQuotes = quotesData?.filter(quote => {
         const hasSubmittedQuote = quote.chef_quotes?.some(
           chefQuote => chefQuote.chef_id === session.user.id
         );
-        return !hasSubmittedQuote || quote.chef_id === session.user.id;
+        return (quote.quote_status === 'pending' && !hasSubmittedQuote) || 
+               hasSubmittedQuote;
       });
       
       return filteredQuotes || [];
