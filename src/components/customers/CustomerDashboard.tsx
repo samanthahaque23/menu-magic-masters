@@ -27,6 +27,16 @@ export const CustomerDashboard = () => {
               dietary_preference,
               course_type
             )
+          ),
+          chef_quotes (
+            id,
+            chef_id,
+            price,
+            quote_status,
+            is_visible_to_customer,
+            profiles:chef_id (
+              full_name
+            )
           )
         `)
         .order('created_at', { ascending: false });
@@ -35,6 +45,43 @@ export const CustomerDashboard = () => {
       return quotes || [];
     },
   });
+
+  const handleQuoteSelection = async (quoteId: string, chefQuoteId: string, price: number) => {
+    try {
+      // Update the selected chef quote status to approved
+      const { error: chefQuoteError } = await supabase
+        .from('chef_quotes')
+        .update({ quote_status: 'approved' })
+        .eq('id', chefQuoteId);
+
+      if (chefQuoteError) throw chefQuoteError;
+
+      // Update the quote with the selected price and status
+      const { error: quoteError } = await supabase
+        .from('quotes')
+        .update({ 
+          total_price: price,
+          quote_status: 'pending',
+          is_confirmed: false
+        })
+        .eq('id', quoteId);
+
+      if (quoteError) throw quoteError;
+
+      toast({
+        title: "Success",
+        description: "Quote selected successfully",
+      });
+
+      refetch();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
+  };
 
   const handleStatusUpdate = async (id: string, action: 'received' | 'confirm') => {
     try {
@@ -107,6 +154,36 @@ export const CustomerDashboard = () => {
                     </li>
                   ))}
                 </ul>
+
+                {order.chef_quotes && order.chef_quotes.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="font-semibold mb-2">Chef Quotes</h3>
+                    <ul className="space-y-2">
+                      {order.chef_quotes
+                        .filter(quote => quote.is_visible_to_customer)
+                        .map((chefQuote) => (
+                          <li key={chefQuote.id} className="flex items-center justify-between">
+                            <div>
+                              <span>{chefQuote.profiles?.full_name}</span>
+                              <span className="ml-2 font-semibold">${chefQuote.price}</span>
+                              {chefQuote.quote_status === 'approved' && (
+                                <span className="ml-2 text-green-500">(Selected)</span>
+                              )}
+                            </div>
+                            {!order.is_confirmed && order.quote_status !== 'approved' && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleQuoteSelection(order.id, chefQuote.id, chefQuote.price)}
+                                variant={chefQuote.quote_status === 'approved' ? 'secondary' : 'default'}
+                              >
+                                {chefQuote.quote_status === 'approved' ? 'Selected' : 'Select Quote'}
+                              </Button>
+                            )}
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
               </div>
               <div className="space-y-4">
                 <h3 className="font-semibold mb-2">Order Status</h3>
