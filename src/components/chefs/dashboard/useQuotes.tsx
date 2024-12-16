@@ -7,6 +7,32 @@ export const useQuotes = (session: any) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const clearAllData = async () => {
+    try {
+      // Delete data in this specific order to handle foreign key constraints
+      await supabase.from('chef_quotes').delete().neq('id', '');
+      await supabase.from('quote_items').delete().neq('id', '');
+      await supabase.from('quotes').delete().neq('id', '');
+      await supabase.from('food_items').delete().neq('id', '');
+      
+      // Do not delete from profiles table as it contains login data
+      
+      toast({
+        title: "Success",
+        description: "All transactional data has been cleared while preserving user accounts",
+      });
+
+      // Refresh the quotes data
+      queryClient.invalidateQueries({ queryKey: ['chef-quotes'] });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
+  };
+
   const { data: quotes, isLoading } = useQuery({
     queryKey: ['chef-quotes', session?.user?.id],
     enabled: !!session?.user?.id,
@@ -143,5 +169,6 @@ export const useQuotes = (session: any) => {
     isLoading,
     handleQuoteSubmission,
     handleStatusUpdate,
+    clearAllData,
   };
 };
