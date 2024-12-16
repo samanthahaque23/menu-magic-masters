@@ -65,14 +65,14 @@ export const useQuotes = (session: any) => {
             )
           )
         `)
-        .or(`chef_id.eq.${session.user.id},quote_status.eq.pending`)
+        .or(`chef_id.eq.${session.user.id},and(quote_status.eq.pending,chef_id.is.null)`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       // Filter quotes to only show those from customers and relevant to the chef
-      return quotes.filter(quote => {
-        // Show if it's assigned to this chef
+      return quotes?.filter(quote => {
+        // Show if it's assigned to this chef (including confirmed orders)
         if (quote.chef_id === session.user.id) return true;
         // Show if it's pending and has no chef assigned
         if (quote.quote_status === 'pending' && !quote.chef_id) return true;
