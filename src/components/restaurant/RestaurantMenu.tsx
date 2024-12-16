@@ -104,9 +104,31 @@ export const RestaurantMenu = () => {
                 <div className="grid gap-4 py-4">
                   <Auth
                     supabaseClient={supabase}
-                    appearance={{ theme: ThemeSupa }}
+                    appearance={{ 
+                      theme: ThemeSupa,
+                      variables: {
+                        default: {
+                          colors: {
+                            brand: 'rgb(var(--foreground))',
+                            brandAccent: 'rgb(var(--foreground))',
+                          },
+                        },
+                      },
+                    }}
                     theme="light"
                     providers={[]}
+                    localization={{
+                      variables: {
+                        sign_up: {
+                          password_input_placeholder: "Password (min. 6 characters)",
+                          password_input_label: "Password (min. 6 characters)"
+                        },
+                        sign_in: {
+                          password_input_placeholder: "Your password",
+                          password_input_label: "Password"
+                        }
+                      }
+                    }}
                   />
                 </div>
               </DialogContent>
