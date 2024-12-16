@@ -41,48 +41,36 @@ export const QuotationList = () => {
 
   const deleteQuoteMutation = useMutation({
     mutationFn: async ({ id }: { id: string }) => {
-      console.log('Attempting to delete quote:', id);
+      try {
+        // First delete chef quotes
+        const { error: chefQuotesError } = await supabase
+          .from('chef_quotes')
+          .delete()
+          .eq('quote_id', id);
+        
+        if (chefQuotesError) throw chefQuotesError;
 
-      // First delete chef quotes
-      const { data: chefQuotesData, error: chefQuotesError } = await supabase
-        .from('chef_quotes')
-        .delete()
-        .eq('quote_id', id)
-        .select();
-      
-      if (chefQuotesError) {
-        console.error('Error deleting chef quotes:', chefQuotesError);
-        throw chefQuotesError;
+        // Then delete quote items
+        const { error: itemsError } = await supabase
+          .from('quote_items')
+          .delete()
+          .eq('quote_id', id);
+        
+        if (itemsError) throw itemsError;
+
+        // Finally delete the main quote
+        const { error: quoteError } = await supabase
+          .from('quotes')
+          .delete()
+          .eq('id', id);
+        
+        if (quoteError) throw quoteError;
+
+        return { id };
+      } catch (error: any) {
+        console.error('Error deleting quote:', error);
+        throw error;
       }
-      console.log('Deleted chef quotes:', chefQuotesData);
-
-      // Then delete quote items
-      const { data: quoteItemsData, error: itemsError } = await supabase
-        .from('quote_items')
-        .delete()
-        .eq('quote_id', id)
-        .select();
-      
-      if (itemsError) {
-        console.error('Error deleting quote items:', itemsError);
-        throw itemsError;
-      }
-      console.log('Deleted quote items:', quoteItemsData);
-
-      // Finally delete the main quote
-      const { data: quoteData, error: quoteError } = await supabase
-        .from('quotes')
-        .delete()
-        .eq('id', id)
-        .select();
-      
-      if (quoteError) {
-        console.error('Error deleting quote:', quoteError);
-        throw quoteError;
-      }
-      console.log('Deleted quote:', quoteData);
-
-      return { id };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-quotes'] });
