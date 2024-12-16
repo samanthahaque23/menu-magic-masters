@@ -47,8 +47,7 @@ export const QuotationList = () => {
       }
       
       // Filter out quotes that don't have proper customer profiles
-      const validQuotes = data?.filter(quote => quote.profiles?.role === 'customer');
-      return validQuotes || [];
+      return data?.filter(quote => quote.profiles?.role === 'customer') || [];
     },
   });
 

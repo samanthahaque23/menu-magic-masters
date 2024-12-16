@@ -7,32 +7,6 @@ export const useQuotes = (session: any) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const clearAllData = async () => {
-    try {
-      // Delete data in this specific order to handle foreign key constraints
-      await supabase.from('chef_quotes').delete().neq('id', '');
-      await supabase.from('quote_items').delete().neq('id', '');
-      await supabase.from('quotes').delete().neq('id', '');
-      await supabase.from('food_items').delete().neq('id', '');
-      
-      // Do not delete from profiles table as it contains login data
-      
-      toast({
-        title: "Success",
-        description: "All transactional data has been cleared while preserving user accounts",
-      });
-
-      // Refresh the quotes data
-      queryClient.invalidateQueries({ queryKey: ['chef-quotes'] });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    }
-  };
-
   const { data: quotes, isLoading } = useQuery({
     queryKey: ['chef-quotes', session?.user?.id],
     enabled: !!session?.user?.id,
@@ -65,14 +39,21 @@ export const useQuotes = (session: any) => {
             )
           )
         `)
-        .or(`chef_id.eq.${session.user.id},and(quote_status.eq.pending,chef_id.is.null)`)
+        .or(`
+          chef_id.eq.${session.user.id},
+          and(
+            quote_status.eq.pending,
+            chef_id.is.null,
+            order_status.is.null
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       // Filter quotes to only show those from customers and relevant to the chef
       return quotes?.filter(quote => {
-        // Show if it's assigned to this chef (including confirmed orders)
+        // Show if it's assigned to this chef
         if (quote.chef_id === session.user.id) return true;
         // Show if it's pending and has no chef assigned
         if (quote.quote_status === 'pending' && !quote.chef_id) return true;
@@ -112,6 +93,7 @@ export const useQuotes = (session: any) => {
           quote_id: quoteId,
           chef_id: session.user.id,
           price: price,
+          is_visible_to_customer: true
         });
 
       if (error) throw error;
@@ -168,7 +150,6 @@ export const useQuotes = (session: any) => {
     quotes,
     isLoading,
     handleQuoteSubmission,
-    handleStatusUpdate,
-    clearAllData,
+    handleStatusUpdate
   };
 };
