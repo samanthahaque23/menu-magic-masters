@@ -53,7 +53,10 @@ export const useQuotes = (session: any) => {
         // Show if this chef has submitted a quote
         if (quote.chef_quotes?.some(q => q.chef_id === session.user.id)) return true;
         return false;
-      }) || [];
+      }).filter(quote => 
+        // Ensure we only show quotes from customers
+        quote.profiles?.role === 'customer'
+      ) || [];
     }
   });
 
