@@ -41,36 +41,16 @@ export const QuotationList = () => {
 
   const deleteQuoteMutation = useMutation({
     mutationFn: async ({ id }: { id: string }) => {
-      try {
-        // First delete chef quotes
-        const { error: chefQuotesError } = await supabase
-          .from('chef_quotes')
-          .delete()
-          .eq('quote_id', id);
-        
-        if (chefQuotesError) throw chefQuotesError;
-
-        // Then delete quote items
-        const { error: itemsError } = await supabase
-          .from('quote_items')
-          .delete()
-          .eq('quote_id', id);
-        
-        if (itemsError) throw itemsError;
-
-        // Finally delete the main quote
-        const { error: quoteError } = await supabase
-          .from('quotes')
-          .delete()
-          .eq('id', id);
-        
-        if (quoteError) throw quoteError;
-
-        return { id };
-      } catch (error: any) {
-        console.error('Error deleting quote:', error);
-        throw error;
+      const { error: deleteError } = await supabase.rpc('delete_quote_cascade', {
+        quote_id: id
+      });
+      
+      if (deleteError) {
+        console.error('Error in delete_quote_cascade:', deleteError);
+        throw deleteError;
       }
+
+      return { id };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-quotes'] });
