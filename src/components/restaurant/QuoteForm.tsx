@@ -29,10 +29,22 @@ export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
         return;
       }
 
-      // Create the quote
+      // Get the current user's session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to submit a quote",
+        });
+        return;
+      }
+
+      // Create the quote with customer_id
       const { data: quote, error: quoteError } = await supabase
         .from('quotes')
         .insert({
+          customer_id: session.user.id,
           party_date: date.toISOString(),
           party_location: data.partyLocation,
           veg_guests: data.vegGuests,
