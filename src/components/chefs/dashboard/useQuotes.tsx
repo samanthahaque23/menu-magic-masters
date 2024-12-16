@@ -51,6 +51,24 @@ export const useQuotes = (session: any) => {
 
   const handleQuoteSubmission = async (quoteId: string, price: number) => {
     try {
+      // First check if this chef has already submitted a quote
+      const { data: existingQuotes, error: checkError } = await supabase
+        .from('chef_quotes')
+        .select('id')
+        .eq('quote_id', quoteId)
+        .eq('chef_id', session.user.id);
+
+      if (checkError) throw checkError;
+
+      if (existingQuotes && existingQuotes.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You have already submitted a quote for this request",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('chef_quotes')
         .insert({
