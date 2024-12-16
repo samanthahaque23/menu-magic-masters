@@ -13,36 +13,24 @@ export const ChefLogin = () => {
   // Check auth state on mount and when it changes
   supabase.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN') {
-      try {
-        // Check if the user has a chef record
-        const { data: chefData, error: chefError } = await supabase
-          .from('chefs')
-          .select('*')
-          .eq('email', session?.user?.email)
-          .maybeSingle(); // Use maybeSingle instead of single to handle no results
+      // Check if the user has a chef record
+      const { data: chefData, error: chefError } = await supabase
+        .from('chefs')
+        .select('*')
+        .eq('email', session?.user?.email)
+        .single();
 
-        if (chefError) throw chefError;
-        
-        if (!chefData) {
-          toast({
-            variant: "destructive",
-            title: "Access Denied",
-            description: "You are not registered as a chef. Please contact admin for registration.",
-          });
-          await supabase.auth.signOut();
-          return;
-        }
-
-        navigate('/chef');
-      } catch (error: any) {
-        console.error('Error checking chef status:', error);
+      if (chefError || !chefData) {
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "An error occurred while verifying your chef status.",
+          title: "Access Denied",
+          description: "You are not registered as a chef.",
         });
         await supabase.auth.signOut();
+        return;
       }
+
+      navigate('/chef');
     }
   });
 
@@ -59,24 +47,10 @@ export const ChefLogin = () => {
         <div className="bg-card rounded-lg shadow-lg p-6">
           <Auth
             supabaseClient={supabase}
-            appearance={{ 
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: 'rgb(var(--foreground))',
-                    brandAccent: 'rgb(var(--foreground))',
-                  },
-                },
-              },
-            }}
+            appearance={{ theme: ThemeSupa }}
             theme="light"
             providers={[]}
             redirectTo={window.location.origin + '/chef'}
-            onlyThirdPartyProviders={false}
-            magicLink={false}
-            showLinks={false}
-            view="sign_in"
           />
         </div>
       </div>
