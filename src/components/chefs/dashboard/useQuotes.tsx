@@ -39,16 +39,21 @@ export const useQuotes = (session: any) => {
             )
           )
         `)
-        .or(`chef_id.eq.${session.user.id}`)
-        .or(`and(quote_status.eq.pending,chef_id.is.null)`)
-        .or(`and(quote_status.eq.approved,chef_id.eq.${session.user.id})`)
-        .or(`and(chef_quotes.chef_id.eq.${session.user.id},quote_status.eq.rejected)`)
+        .or(`chef_id.eq.${session.user.id},quote_status.eq.pending`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // Filter quotes to only show those from customers
-      return quotes.filter(quote => quote.profiles?.role === 'customer') || [];
+      // Filter quotes to only show those from customers and relevant to the chef
+      return quotes.filter(quote => {
+        // Show if it's assigned to this chef
+        if (quote.chef_id === session.user.id) return true;
+        // Show if it's pending and has no chef assigned
+        if (quote.quote_status === 'pending' && !quote.chef_id) return true;
+        // Show if this chef has submitted a quote
+        if (quote.chef_quotes?.some(q => q.chef_id === session.user.id)) return true;
+        return false;
+      }) || [];
     }
   });
 
