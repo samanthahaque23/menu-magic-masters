@@ -3,9 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CustomerOrders } from "./CustomerOrders";
+import { useToast } from "@/hooks/use-toast";
 
 export const CustomerDashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -17,7 +19,7 @@ export const CustomerDashboard = () => {
     checkAuth();
   }, [navigate]);
 
-  const { data: orders, isLoading, refetch } = useQuery({
+  const { data: orders, isLoading, error, refetch } = useQuery({
     queryKey: ['customer-orders'],
     queryFn: async () => {
       const { data: quotes, error } = await supabase
@@ -49,12 +51,25 @@ export const CustomerDashboard = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error fetching orders",
+          description: error.message,
+        });
+        throw error;
+      }
       return quotes || [];
     },
   });
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <div className="flex items-center justify-center p-8">Loading...</div>;
+
+  if (error) return (
+    <div className="container mx-auto py-8">
+      <div className="text-red-500">Error loading orders. Please try again later.</div>
+    </div>
+  );
 
   return (
     <div className="container mx-auto py-8">
