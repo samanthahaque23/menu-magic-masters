@@ -40,13 +40,40 @@ export const useQuotes = (session: any) => {
         .order('created_at', { ascending: false });
 
       if (quotesError) throw quotesError;
-      return quotesData || [];
+      
+      // Filter out quotes where the current chef has already submitted a quote
+      const filteredQuotes = quotesData?.filter(quote => {
+        const hasSubmittedQuote = quote.chef_quotes?.some(
+          chefQuote => chefQuote.chef_id === session.user.id
+        );
+        return !hasSubmittedQuote || quote.chef_id === session.user.id;
+      });
+      
+      return filteredQuotes || [];
     },
     enabled: !!session?.user?.id,
   });
 
   const handleQuoteSubmission = async (quoteId: string, price: number) => {
     try {
+      // Check if chef has already submitted a quote
+      const { data: existingQuotes, error: checkError } = await supabase
+        .from('chef_quotes')
+        .select('*')
+        .eq('quote_id', quoteId)
+        .eq('chef_id', session.user.id);
+
+      if (checkError) throw checkError;
+
+      if (existingQuotes && existingQuotes.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You have already submitted a quote for this order.",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('chef_quotes')
         .insert({
@@ -57,23 +84,13 @@ export const useQuotes = (session: any) => {
           quote_status: 'pending'
         });
 
-      if (error) {
-        if (error.code === '23505') {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "You have already submitted a quote for this order.",
-          });
-        } else {
-          throw error;
-        }
-      } else {
-        toast({
-          title: "Success",
-          description: "Quote submitted successfully",
-        });
-        refetch();
-      }
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Quote submitted successfully",
+      });
+      refetch();
     } catch (error: any) {
       toast({
         variant: "destructive",
