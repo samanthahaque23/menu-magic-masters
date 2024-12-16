@@ -120,12 +120,12 @@ export const RestaurantMenu = () => {
                     localization={{
                       variables: {
                         sign_up: {
-                          password_input_placeholder: "Password (min. 6 characters)",
-                          password_input_label: "Password (min. 6 characters)"
+                          password_label: "Password (min. 6 characters)",
+                          password_input_placeholder: "Password (min. 6 characters)"
                         },
                         sign_in: {
-                          password_input_placeholder: "Your password",
-                          password_input_label: "Password"
+                          password_label: "Password",
+                          password_input_placeholder: "Your password"
                         }
                       }
                     }}
