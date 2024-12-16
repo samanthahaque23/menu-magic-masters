@@ -1,193 +1,18 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { QuotationTable } from "./QuotationTable";
-import { QuoteStatus, OrderStatus } from "@/integrations/supabase/types/enums";
+import { ChefHeader } from "./dashboard/ChefHeader";
+import { useChefAuth } from "./dashboard/useChefAuth";
+import { useQuotes } from "./dashboard/useQuotes";
 
 export const ChefDashboard = () => {
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const [chefName, setChefName] = useState<string>("");
-  const [session, setSession] = useState<any>(null);
-  
-  // Check authentication on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate('/chef/login');
-        return;
-      }
+  const { session, chefName, handleSignOut } = useChefAuth();
+  const { quotes, isLoading, handleQuoteSubmission, handleStatusUpdate } = useQuotes(session);
 
-      setSession(session);
-
-      try {
-        // Verify the user is a chef
-        const { data: chefData, error: chefError } = await supabase
-          .from('chefs')
-          .select('*')
-          .eq('email', session.user.email)
-          .single();
-
-        if (chefError || !chefData) {
-          toast({
-            variant: "destructive",
-            title: "Access Denied",
-            description: "You are not registered as a chef.",
-          });
-          await supabase.auth.signOut();
-          navigate('/chef/login');
-          return;
-        }
-
-        // Check if profile exists
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .maybeSingle(); // Use maybeSingle() instead of single()
-
-        if (!profileData) {
-          // Create profile if it doesn't exist
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: session.user.id,
-              email: session.user.email,
-              full_name: chefData.name,
-              role: 'chef'
-            });
-
-          if (insertError) {
-            console.error('Profile creation error:', insertError);
-            toast({
-              variant: "destructive",
-              title: "Error",
-              description: "Failed to create chef profile.",
-            });
-            return;
-          }
-
-          toast({
-            title: "Profile Created",
-            description: "Your chef profile has been created successfully.",
-          });
-        }
-
-        setChefName(chefData.name);
-      } catch (error: any) {
-        console.error('Error in auth check:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "An error occurred while setting up your profile.",
-        });
-      }
-    };
-
-    checkAuth();
-  }, [navigate, toast]);
-
-  const handleSignOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "Signed out successfully",
-      });
-      
-      navigate('/chef/login');
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    }
-  };
-  
-  const { data: quotes, isLoading: quotesLoading, refetch: refetchQuotes } = useQuery({
-    queryKey: ['quotes', session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return [];
-      
-      const { data: quotesData, error: quotesError } = await supabase
-        .from('quotes')
-        .select(`
-          *,
-          profiles!quotes_customer_id_fkey (full_name, email, phone),
-          quote_items (
-            id,
-            quote_id,
-            food_item_id,
-            quantity,
-            created_at,
-            food_items (
-              name,
-              dietary_preference,
-              course_type
-            )
-          )
-        `)
-        .or(`quote_status.eq.pending,chef_id.eq.${session.user.id}`)
-        .order('created_at', { ascending: false });
-
-      if (quotesError) throw quotesError;
-      return quotesData || [];
-    },
-    enabled: !!session?.user?.id,
-  });
-
-  const handleStatusUpdate = async (id: string, quoteStatus: QuoteStatus, orderStatus?: OrderStatus, price?: number) => {
-    try {
-      const { error } = await supabase
-        .from('quotes')
-        .update({ 
-          quote_status: quoteStatus,
-          ...(orderStatus && { order_status: orderStatus }),
-          ...(price && { total_price: price })
-        })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: `Quote status updated successfully`,
-      });
-      
-      refetchQuotes();
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    }
-  };
-
-  if (quotesLoading) return <div>Loading...</div>;
+  if (isLoading) return <div>Loading...</div>;
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">Chef Dashboard</h2>
-        <div className="flex items-center gap-4">
-          <span className="text-muted-foreground">Welcome, {chefName}</span>
-          <Button
-            variant="destructive"
-            onClick={handleSignOut}
-          >
-            Sign Out
-          </Button>
-        </div>
-      </div>
+      <ChefHeader chefName={chefName} onSignOut={handleSignOut} />
       
       <Tabs defaultValue="quotes" className="space-y-4">
         <TabsList>
@@ -197,7 +22,8 @@ export const ChefDashboard = () => {
         <TabsContent value="quotes">
           <QuotationTable 
             quotations={quotes || []} 
-            onStatusUpdate={handleStatusUpdate} 
+            onStatusUpdate={handleStatusUpdate}
+            onQuoteSubmit={handleQuoteSubmission}
           />
         </TabsContent>
       </Tabs>

@@ -8,64 +8,26 @@ import { OrderProgress } from "./OrderProgress";
 import { QuoteStatus, OrderStatus } from "@/integrations/supabase/types/enums";
 import type { Quote } from "@/integrations/supabase/types/quotes";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 interface QuotationTableProps {
   quotations: Quote[];
-  onStatusUpdate: (id: string, quoteStatus: QuoteStatus, orderStatus?: OrderStatus, price?: number) => void;
+  onStatusUpdate: (id: string, quoteStatus: QuoteStatus, orderStatus?: OrderStatus) => void;
+  onQuoteSubmit: (quoteId: string, price: number) => void;
 }
 
-export const QuotationTable = ({ quotations, onStatusUpdate }: QuotationTableProps) => {
+export const QuotationTable = ({ 
+  quotations, 
+  onStatusUpdate,
+  onQuoteSubmit
+}: QuotationTableProps) => {
   const [prices, setPrices] = useState<Record<string, string>>({});
-  const { toast } = useToast();
 
-  const handleAccept = async (quotation: Quote) => {
+  const handleSubmitQuote = (quotation: Quote) => {
     const price = parseFloat(prices[quotation.id] || "0");
-    if (!price || price <= 0) {
-      toast({
-        variant: "destructive",
-        title: "Invalid Price",
-        description: "Please enter a valid price before accepting the quote",
-      });
-      return;
-    }
-
-    // Get current chef's session
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "You must be logged in to accept quotes",
-      });
-      return;
-    }
-
-    // Update the quote with chef's price
-    const { error: updateError } = await supabase
-      .from('quotes')
-      .update({
-        total_price: price,
-        chef_id: session.user.id,
-        quote_status: 'pending'
-      })
-      .eq('id', quotation.id);
-
-    if (updateError) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to submit quote. Please try again.",
-      });
-      return;
-    }
-
-    toast({
-      title: "Success",
-      description: "Your quote has been submitted successfully",
-    });
-
+    if (!price || price <= 0) return;
+    
+    onQuoteSubmit(quotation.id, price);
+    
     // Clear the price input
     setPrices(prev => ({
       ...prev,
@@ -103,6 +65,21 @@ export const QuotationTable = ({ quotations, onStatusUpdate }: QuotationTablePro
                   <p>Location: {quotation.party_location}</p>
                   <p>Veg Guests: {quotation.veg_guests}</p>
                   <p>Non-veg Guests: {quotation.non_veg_guests}</p>
+                  {quotation.chef_quotes && quotation.chef_quotes.length > 0 && (
+                    <div className="mt-2">
+                      <p className="font-semibold">Submitted Quotes:</p>
+                      <ul className="text-sm space-y-1">
+                        {quotation.chef_quotes.map((chefQuote) => (
+                          <li key={chefQuote.id}>
+                            Price: ${chefQuote.price}
+                            {chefQuote.quote_status === 'approved' && (
+                              <span className="ml-2 text-green-500">(Selected)</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </TableCell>
               <TableCell>
@@ -124,12 +101,9 @@ export const QuotationTable = ({ quotations, onStatusUpdate }: QuotationTablePro
                   quoteStatus={quotation.quote_status} 
                   orderStatus={quotation.order_status}
                 />
-                {quotation.quote_status === 'rejected_by_customer' && (
-                  <p className="text-sm text-red-500 mt-2">Rejected by customer</p>
-                )}
               </TableCell>
               <TableCell>
-                {quotation.quote_status === 'pending' && !quotation.chef_id && (
+                {quotation.quote_status === 'pending' && (
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <Input
@@ -146,7 +120,7 @@ export const QuotationTable = ({ quotations, onStatusUpdate }: QuotationTablePro
                     <div className="flex space-x-2">
                       <Button
                         size="sm"
-                        onClick={() => handleAccept(quotation)}
+                        onClick={() => handleSubmitQuote(quotation)}
                       >
                         <Check className="h-4 w-4 mr-1" />
                         Submit Quote
