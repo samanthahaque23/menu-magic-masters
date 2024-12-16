@@ -34,29 +34,48 @@ export const QuotationList = () => {
 
   const deleteQuoteMutation = useMutation({
     mutationFn: async ({ id }: { id: string }) => {
+      console.log('Attempting to delete quote:', id);
+
       // First delete chef quotes
-      const { error: chefQuotesError } = await supabase
+      const { data: chefQuotesData, error: chefQuotesError } = await supabase
         .from('chef_quotes')
         .delete()
-        .eq('quote_id', id);
+        .eq('quote_id', id)
+        .select();
       
-      if (chefQuotesError) throw chefQuotesError;
+      if (chefQuotesError) {
+        console.error('Error deleting chef quotes:', chefQuotesError);
+        throw chefQuotesError;
+      }
+      console.log('Deleted chef quotes:', chefQuotesData);
 
       // Then delete quote items
-      const { error: itemsError } = await supabase
+      const { data: quoteItemsData, error: itemsError } = await supabase
         .from('quote_items')
         .delete()
-        .eq('quote_id', id);
+        .eq('quote_id', id)
+        .select();
       
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error('Error deleting quote items:', itemsError);
+        throw itemsError;
+      }
+      console.log('Deleted quote items:', quoteItemsData);
 
       // Finally delete the main quote
-      const { error: quoteError } = await supabase
+      const { data: quoteData, error: quoteError } = await supabase
         .from('quotes')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select();
       
-      if (quoteError) throw quoteError;
+      if (quoteError) {
+        console.error('Error deleting quote:', quoteError);
+        throw quoteError;
+      }
+      console.log('Deleted quote:', quoteData);
+
+      return { id };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-quotes'] });
