@@ -47,10 +47,24 @@ export const ChefLogin = () => {
         <div className="bg-card rounded-lg shadow-lg p-6">
           <Auth
             supabaseClient={supabase}
-            appearance={{ theme: ThemeSupa }}
+            appearance={{ 
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: 'rgb(var(--foreground))',
+                    brandAccent: 'rgb(var(--foreground))',
+                  },
+                },
+              },
+            }}
             theme="light"
             providers={[]}
             redirectTo={window.location.origin + '/chef'}
+            onlyThirdPartyProviders={false}
+            magicLink={false}
+            showLinks={false}
+            view="sign_in"
           />
         </div>
       </div>
