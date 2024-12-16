@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { QuoteStatus, OrderStatus } from "@/integrations/supabase/types/enums";
 import { Session } from "@supabase/supabase-js";
 
 export const useQuotes = (session: Session | null) => {
@@ -12,7 +13,7 @@ export const useQuotes = (session: Session | null) => {
     queryFn: async () => {
       if (!session?.user?.id) return null;
 
-      const { data, error } = await supabase
+      const { data: quotes, error } = await supabase
         .from('quotes')
         .select(`
           *,
@@ -44,19 +45,51 @@ export const useQuotes = (session: Session | null) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+
+      // Filter quotes to only show those from customers and relevant to the chef
+      return quotes?.filter(quote => {
+        // Show if it's assigned to this chef
+        if (quote.chef_id === session.user.id) return true;
+        // Show if it's pending and has no chef assigned
+        if (quote.quote_status === 'pending' && !quote.chef_id) return true;
+        // Show if this chef has submitted a quote
+        if (quote.chef_quotes?.some(q => q.chef_id === session.user.id)) return true;
+        return false;
+      }).filter(quote => 
+        // Ensure we only show quotes from customers
+        quote.profiles?.role === 'customer'
+      ) || [];
     },
     enabled: !!session?.user?.id,
   });
 
   const handleQuoteSubmission = async (quoteId: string, price: number) => {
     try {
+      // First check if this chef has already submitted a quote
+      const { data: existingQuotes, error: checkError } = await supabase
+        .from('chef_quotes')
+        .select('id')
+        .eq('quote_id', quoteId)
+        .eq('chef_id', session.user.id);
+
+      if (checkError) throw checkError;
+
+      if (existingQuotes && existingQuotes.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You have already submitted a quote for this request",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('chef_quotes')
         .insert({
           quote_id: quoteId,
-          chef_id: session?.user?.id,
+          chef_id: session.user.id,
           price: price,
+          is_visible_to_customer: true
         });
 
       if (error) throw error;
@@ -76,18 +109,27 @@ export const useQuotes = (session: Session | null) => {
     }
   };
 
-  const handleStatusUpdate = async (quoteId: string, newStatus: 'ready_to_deliver' | 'delivered') => {
+  const handleStatusUpdate = async (
+    quoteId: string, 
+    quoteStatus: QuoteStatus,
+    orderStatus?: OrderStatus
+  ) => {
     try {
+      const updateData: any = { quote_status: quoteStatus };
+      if (orderStatus) {
+        updateData.order_status = orderStatus;
+      }
+
       const { error } = await supabase
         .from('quotes')
-        .update({ order_status: newStatus })
+        .update(updateData)
         .eq('id', quoteId);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: `Order marked as ${newStatus.replace(/_/g, ' ')}`,
+        description: "Status updated successfully",
       });
 
       queryClient.invalidateQueries({ queryKey: ['chef-quotes'] });
