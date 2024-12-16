@@ -8,33 +8,8 @@ export const QuotationList = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch quotations with explicit relationship specification
-  const { data: quotations, isLoading: isLoadingQuotations } = useQuery({
-    queryKey: ['admin-quotations'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('quotations')
-        .select(`
-          *,
-          profiles!quotations_customer_id_fkey (full_name, email),
-          quotation_items (
-            quantity,
-            food_items (
-              name,
-              dietary_preference,
-              course_type
-            )
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
   // Fetch quotes with explicit relationship specification
-  const { data: quotes, isLoading: isLoadingQuotes } = useQuery({
+  const { data: quotes, isLoading } = useQuery({
     queryKey: ['admin-quotes'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -59,28 +34,25 @@ export const QuotationList = () => {
   });
 
   const deleteQuoteMutation = useMutation({
-    mutationFn: async ({ id, type }: { id: string; type: 'quote' | 'quotation' }) => {
-      const table = type === 'quote' ? 'quotes' : 'quotations';
-      const itemsTable = type === 'quote' ? 'quote_items' : 'quotation_items';
-      
+    mutationFn: async ({ id }: { id: string }) => {
       // First delete the related items
       const { error: itemsError } = await supabase
-        .from(itemsTable)
+        .from('quote_items')
         .delete()
-        .eq(`${type}_id`, id);
+        .eq('quote_id', id);
       
       if (itemsError) throw itemsError;
 
       // Then delete the main record
       const { error } = await supabase
-        .from(table)
+        .from('quotes')
         .delete()
         .eq('id', id);
       
       if (error) throw error;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [`admin-${variables.type}s`] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-quotes'] });
       toast({
         title: "Success",
         description: "Quote deleted successfully",
@@ -95,21 +67,21 @@ export const QuotationList = () => {
     },
   });
 
-  const handleStatusUpdate = async (quotationId: string, newStatus: 'approved' | 'rejected') => {
+  const handleStatusUpdate = async (quoteId: string, newStatus: 'approved' | 'rejected') => {
     try {
       const { error } = await supabase
-        .from('quotations')
+        .from('quotes')
         .update({ quote_status: newStatus })
-        .eq('id', quotationId);
+        .eq('id', quoteId);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: `Quotation ${newStatus} successfully`,
+        description: `Quote ${newStatus} successfully`,
       });
       
-      queryClient.invalidateQueries({ queryKey: ['admin-quotations'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-quotes'] });
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -119,7 +91,7 @@ export const QuotationList = () => {
     }
   };
 
-  if (isLoadingQuotations || isLoadingQuotes) return <div>Loading...</div>;
+  if (isLoading) return <div>Loading...</div>;
 
   return (
     <div className="space-y-6">
@@ -135,21 +107,13 @@ export const QuotationList = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {quotations?.map((quotation) => (
-              <QuotationTableRow
-                key={quotation.id}
-                item={quotation}
-                type="quotation"
-                onDelete={(id, type) => deleteQuoteMutation.mutate({ id, type })}
-                onStatusUpdate={handleStatusUpdate}
-              />
-            ))}
             {quotes?.map((quote) => (
               <QuotationTableRow
                 key={quote.id}
                 item={quote}
                 type="quote"
-                onDelete={(id, type) => deleteQuoteMutation.mutate({ id, type })}
+                onDelete={(id) => deleteQuoteMutation.mutate({ id })}
+                onStatusUpdate={handleStatusUpdate}
               />
             ))}
           </TableBody>
