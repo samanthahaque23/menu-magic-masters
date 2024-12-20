@@ -53,13 +53,19 @@ export const useQuotes = (session: Session | null) => {
       return quotes?.filter(quote => {
         // Show if it's assigned to this chef
         if (quote.chef_id === session.user.id) return true;
+        
         // Show if it's pending and has no chef assigned
-        if (quote.quote_status === 'pending' && !quote.chef_id) return true;
+        if (quote.quote_status === 'pending' && !quote.chef_id) {
+          // Check if this chef hasn't already submitted a quote
+          return !quote.chef_quotes?.some(q => q.chef_id === session.user.id);
+        }
+        
         // Show if this chef's quote has been approved
         if (quote.chef_quotes?.some(q => 
           q.chef_id === session.user.id && 
           q.quote_status === 'approved'
         )) return true;
+        
         return false;
       }).filter(quote => 
         // Ensure we only show quotes from customers
@@ -76,7 +82,7 @@ export const useQuotes = (session: Session | null) => {
         .from('chef_quotes')
         .select('id')
         .eq('quote_id', quoteId)
-        .eq('chef_id', session.user.id);
+        .eq('chef_id', session?.user?.id);
 
       if (checkError) throw checkError;
 
@@ -93,9 +99,10 @@ export const useQuotes = (session: Session | null) => {
         .from('chef_quotes')
         .insert({
           quote_id: quoteId,
-          chef_id: session.user.id,
+          chef_id: session?.user?.id,
           price: price,
-          is_visible_to_customer: true
+          is_visible_to_customer: true,
+          quote_status: 'pending'
         });
 
       if (error) throw error;
@@ -107,6 +114,7 @@ export const useQuotes = (session: Session | null) => {
 
       queryClient.invalidateQueries({ queryKey: ['chef-quotes'] });
     } catch (error: any) {
+      console.error('Quote submission error:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -140,6 +148,7 @@ export const useQuotes = (session: Session | null) => {
 
       queryClient.invalidateQueries({ queryKey: ['chef-quotes'] });
     } catch (error: any) {
+      console.error('Status update error:', error);
       toast({
         variant: "destructive",
         title: "Error",
