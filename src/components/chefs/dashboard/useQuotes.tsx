@@ -50,6 +50,7 @@ export const useQuotes = (session: Session | null) => {
       // 1. Quotes assigned to this chef
       // 2. Pending quotes that need chef quotes
       // 3. Quotes where this chef's quote has been approved
+      // 4. Quotes where this chef's quote has been selected by customer
       return quotes?.filter(quote => {
         // Show if it's assigned to this chef
         if (quote.chef_id === session.user.id) return true;
@@ -60,10 +61,11 @@ export const useQuotes = (session: Session | null) => {
           return !quote.chef_quotes?.some(q => q.chef_id === session.user.id);
         }
         
-        // Show if this chef's quote has been approved
+        // Show if this chef's quote has been approved or selected
         if (quote.chef_quotes?.some(q => 
           q.chef_id === session.user.id && 
-          q.quote_status === 'approved'
+          (q.quote_status === 'approved' || 
+           (quote.quote_status === 'pending' && quote.is_confirmed === false))
         )) return true;
         
         return false;
