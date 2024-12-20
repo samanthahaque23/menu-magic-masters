@@ -41,14 +41,14 @@ export const useQuotes = (session: Session | null) => {
             )
           )
         `)
-        .or(`chef_id.eq.${session.user.id},and(quote_status.eq.pending,chef_id.is.null),chef_quotes.chef_id.eq.${session.user.id}`)
+        .or(`chef_id.eq.${session.user.id},quote_status.eq.pending`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       // Filter quotes to show:
-      // 1. Pending quotes that need chef quotes
-      // 2. Quotes assigned to this chef
+      // 1. Quotes assigned to this chef
+      // 2. Pending quotes that need chef quotes
       // 3. Quotes where this chef's quote has been approved
       return quotes?.filter(quote => {
         // Show if it's assigned to this chef
