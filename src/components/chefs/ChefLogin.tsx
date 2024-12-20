@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
@@ -10,41 +10,66 @@ export const ChefLogin = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
 
-  // Check auth state on mount and when it changes
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN') {
-      try {
-        // Check if the user has a chef record
-        const { data: chefData, error: chefError } = await supabase
-          .from('chefs')
-          .select('*')
-          .eq('email', session?.user?.email)
-          .maybeSingle(); // Use maybeSingle instead of single to handle no results
+  useEffect(() => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        checkChefStatus(session);
+      }
+      setLoading(false);
+    });
 
-        if (chefError) throw chefError;
-        
-        if (!chefData) {
-          toast({
-            variant: "destructive",
-            title: "Access Denied",
-            description: "You are not registered as a chef. Please contact admin for registration.",
-          });
-          await supabase.auth.signOut();
-          return;
-        }
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        checkChefStatus(session);
+      }
+    });
 
-        navigate('/chef');
-      } catch (error: any) {
-        console.error('Error checking chef status:', error);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  const checkChefStatus = async (session) => {
+    try {
+      const { data: chefData, error: chefError } = await supabase
+        .from('chefs')
+        .select('*')
+        .eq('email', session?.user?.email)
+        .maybeSingle();
+
+      if (chefError) throw chefError;
+      
+      if (!chefData) {
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "An error occurred while verifying your chef status.",
+          title: "Access Denied",
+          description: "You are not registered as a chef. Please contact admin for registration.",
         });
         await supabase.auth.signOut();
+        return;
       }
+
+      navigate('/chef');
+    } catch (error) {
+      console.error('Error checking chef status:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An error occurred while verifying your chef status.",
+      });
+      await supabase.auth.signOut();
     }
-  });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
