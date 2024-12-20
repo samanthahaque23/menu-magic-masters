@@ -41,7 +41,9 @@ export const useQuotes = (session: Session | null) => {
             )
           )
         `)
-        .or(`chef_id.eq.${session.user.id},and(quote_status.eq.pending,chef_id.is.null),and(chef_quotes.chef_id.eq.${session.user.id},chef_quotes.quote_status.eq.approved)`)
+        .or(
+          `chef_id.eq.${session.user.id},quote_status.eq.pending,chef_quotes.chef_id.eq.${session.user.id}`
+        )
         .order('created_at', { ascending: false });
 
       if (error) throw error;
