@@ -46,7 +46,10 @@ export const useQuotes = (session: Session | null) => {
 
       if (error) throw error;
 
-      // Filter quotes to only show those from customers and relevant to the chef
+      // Filter quotes to only show:
+      // 1. Pending quotes that need chef quotes
+      // 2. Quotes assigned to this chef
+      // 3. Quotes where this chef has submitted a quote
       return quotes?.filter(quote => {
         // Show if it's assigned to this chef
         if (quote.chef_id === session.user.id) return true;
