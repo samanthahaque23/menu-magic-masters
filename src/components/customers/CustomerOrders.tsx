@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { OrderProgress } from "../chefs/OrderProgress";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 export const CustomerOrders = ({ orders, refetch }) => {
   const { toast } = useToast();
@@ -79,6 +80,19 @@ export const CustomerOrders = ({ orders, refetch }) => {
     }
   };
 
+  const getStatusColor = (status: string) => {
+    const colors = {
+      pending: "bg-yellow-100 text-yellow-800",
+      confirmed: "bg-blue-100 text-blue-800",
+      processing: "bg-purple-100 text-purple-800",
+      ready_to_deliver: "bg-indigo-100 text-indigo-800",
+      on_the_way: "bg-cyan-100 text-cyan-800",
+      delivered: "bg-green-100 text-green-800",
+      received: "bg-emerald-100 text-emerald-800"
+    };
+    return colors[status] || "bg-gray-100 text-gray-800";
+  };
+
   return (
     <div className="grid gap-6">
       {orders?.sort((a, b) => 
@@ -97,6 +111,15 @@ export const CustomerOrders = ({ orders, refetch }) => {
                   Total Price: ${order.total_price}
                 </p>
               )}
+              <div className="mt-4">
+                <span className="text-sm font-medium mb-2 block">Current Status:</span>
+                <Badge 
+                  variant="secondary"
+                  className={`${getStatusColor(order.order_status)} text-sm`}
+                >
+                  {order.order_status?.replace(/_/g, ' ').toUpperCase() || 'PENDING'}
+                </Badge>
+              </div>
             </div>
             <div>
               <h3 className="font-semibold mb-2">Menu Items</h3>
@@ -142,7 +165,7 @@ export const CustomerOrders = ({ orders, refetch }) => {
               )}
             </div>
             <div className="space-y-4">
-              <h3 className="font-semibold mb-2">Order Status</h3>
+              <h3 className="font-semibold mb-2">Order Progress</h3>
               <OrderProgress 
                 quoteStatus={order.quote_status} 
                 orderStatus={order.order_status}
@@ -150,6 +173,7 @@ export const CustomerOrders = ({ orders, refetch }) => {
               {order.order_status === 'delivered' && (
                 <Button
                   onClick={() => handleStatusUpdate(order.id, 'received')}
+                  className="w-full"
                 >
                   Mark as Received
                 </Button>
