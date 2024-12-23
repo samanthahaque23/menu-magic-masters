@@ -20,24 +20,49 @@ export const RestaurantMenu = () => {
   const [quoteItems, setQuoteItems] = useState<Array<{ foodItem: any; quantity: number }>>([]);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [user, setUser] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        
+        setUser(session?.user ?? null);
+        setIsInitialized(true);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        setShowAuthDialog(false);
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully signed in.",
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+          if (event === 'SIGNED_IN') {
+            setUser(session?.user ?? null);
+            setShowAuthDialog(false);
+            toast({
+              title: "Welcome back!",
+              description: "You have successfully signed in.",
+            });
+          } else if (event === 'SIGNED_OUT') {
+            setUser(null);
+            // Clear any user-specific state
+            setQuoteItems([]);
+            setShowQuoteForm(false);
+            setIsQuoteOpen(false);
+          }
         });
-      }
-    });
 
-    return () => subscription.unsubscribe();
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error: any) {
+        console.error('Auth initialization error:', error);
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "There was a problem with authentication. Please try signing in again.",
+        });
+        setIsInitialized(true);
+      }
+    };
+
+    initializeAuth();
   }, [toast]);
 
   const { data: foodItems, isLoading } = useQuery({
@@ -98,7 +123,7 @@ export const RestaurantMenu = () => {
     });
   };
 
-  if (isLoading) return <div className="text-center p-8">Loading...</div>;
+  if (!isInitialized || isLoading) return <div className="text-center p-8">Loading...</div>;
 
   return (
     <div className="container mx-auto p-6">
