@@ -46,22 +46,11 @@ export const useQuotes = (session: Session | null) => {
 
       if (error) throw error;
 
-      // Filter quotes to show:
-      // 1. Quotes assigned to this chef
-      // 2. Pending quotes that need chef quotes
-      // 3. Quotes where this chef's quote has been approved
-      // 4. Quotes where this chef's quote has been selected by customer
       return quotes?.filter(quote => {
-        // Show if it's assigned to this chef
         if (quote.chef_id === session.user.id) return true;
-        
-        // Show if it's pending and has no chef assigned
         if (quote.quote_status === 'pending' && !quote.chef_id) {
-          // Check if this chef hasn't already submitted a quote
           return !quote.chef_quotes?.some(q => q.chef_id === session.user.id);
         }
-        
-        // Show if this chef's quote has been approved or selected
         if (quote.chef_quotes?.some(q => 
           q.chef_id === session.user.id && 
           (q.quote_status === 'approved' || 
@@ -69,17 +58,13 @@ export const useQuotes = (session: Session | null) => {
         )) return true;
         
         return false;
-      }).filter(quote => 
-        // Ensure we only show quotes from customers
-        quote.profiles?.role === 'customer'
-      ) || [];
+      }).filter(quote => quote.profiles?.role === 'customer') || [];
     },
     enabled: !!session?.user?.id,
   });
 
   const handleQuoteSubmission = async (quoteId: string, price: number) => {
     try {
-      // First check if this chef has already submitted a quote
       const { data: existingQuotes, error: checkError } = await supabase
         .from('chef_quotes')
         .select('id')
