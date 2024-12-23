@@ -9,8 +9,9 @@ import { QuoteList } from "./QuoteList";
 import { QuoteForm } from "./QuoteForm";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { SignUpForm } from "./SignUpForm";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SignInForm } from "./SignInForm";
 
 export const RestaurantMenu = () => {
   const { toast } = useToast();
@@ -29,11 +30,15 @@ export const RestaurantMenu = () => {
       setUser(session?.user ?? null);
       if (session?.user) {
         setShowAuthDialog(false);
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully signed in.",
+        });
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [toast]);
 
   const { data: foodItems, isLoading } = useQuery({
     queryKey: ['food-items'],
@@ -85,6 +90,14 @@ export const RestaurantMenu = () => {
     });
   };
 
+  const handleAuthSuccess = () => {
+    setShowAuthDialog(false);
+    toast({
+      title: "Success",
+      description: "You have successfully signed in.",
+    });
+  };
+
   if (isLoading) return <div className="text-center p-8">Loading...</div>;
 
   return (
@@ -101,36 +114,18 @@ export const RestaurantMenu = () => {
                 <DialogHeader>
                   <DialogTitle>Authentication</DialogTitle>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <Auth
-                    supabaseClient={supabase}
-                    appearance={{ 
-                      theme: ThemeSupa,
-                      variables: {
-                        default: {
-                          colors: {
-                            brand: 'rgb(var(--foreground))',
-                            brandAccent: 'rgb(var(--foreground))',
-                          },
-                        },
-                      },
-                    }}
-                    theme="light"
-                    providers={[]}
-                    localization={{
-                      variables: {
-                        sign_up: {
-                          password_label: "Password (min. 6 characters)",
-                          password_input_placeholder: "Password (min. 6 characters)"
-                        },
-                        sign_in: {
-                          password_label: "Password",
-                          password_input_placeholder: "Your password"
-                        }
-                      }
-                    }}
-                  />
-                </div>
+                <Tabs defaultValue="signin" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="signin">Sign In</TabsTrigger>
+                    <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="signin">
+                    <SignInForm onSuccess={handleAuthSuccess} />
+                  </TabsContent>
+                  <TabsContent value="signup">
+                    <SignUpForm onSuccess={handleAuthSuccess} />
+                  </TabsContent>
+                </Tabs>
               </DialogContent>
             </Dialog>
           )}
