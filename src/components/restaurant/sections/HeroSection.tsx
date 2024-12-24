@@ -32,7 +32,7 @@ export const HeroSection = () => {
             View Menu
           </Button>
           <div className="mt-12 flex items-center gap-2 text-lg italic text-primary">
-            <Quote className="h-6 w-6" />
+            <Quote className="h-6 w-6 transform scale-x-[-1]" />
             <p>Where every meal feels like home</p>
             <Quote className="h-6 w-6" />
           </div>
