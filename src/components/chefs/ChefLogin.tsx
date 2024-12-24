@@ -8,20 +8,24 @@ import { useToast } from "@/hooks/use-toast";
 export const ChefLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Check auth state on mount and when it changes
   supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN') {
+    if (event === 'SIGNED_IN' && session?.user?.email) {
+      setLoading(true);
       try {
         // Check if the user has a chef record
         const { data: chefData, error: chefError } = await supabase
           .from('chefs')
           .select('*')
-          .eq('email', session?.user?.email)
-          .maybeSingle(); // Use maybeSingle instead of single to handle no results
+          .eq('email', session.user.email)
+          .maybeSingle();
 
-        if (chefError) throw chefError;
+        if (chefError) {
+          console.error('Error checking chef status:', chefError);
+          throw chefError;
+        }
         
         if (!chefData) {
           toast({
@@ -33,15 +37,22 @@ export const ChefLogin = () => {
           return;
         }
 
+        // If we get here, the user is a valid chef
+        toast({
+          title: "Welcome back!",
+          description: "Successfully logged in.",
+        });
         navigate('/chef');
       } catch (error: any) {
-        console.error('Error checking chef status:', error);
+        console.error('Error in auth flow:', error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "An error occurred while verifying your chef status.",
+          description: error.message || "An error occurred during login.",
         });
         await supabase.auth.signOut();
+      } finally {
+        setLoading(false);
       }
     }
   });
@@ -57,27 +68,38 @@ export const ChefLogin = () => {
         </div>
         
         <div className="bg-card rounded-lg shadow-lg p-6">
-          <Auth
-            supabaseClient={supabase}
-            appearance={{ 
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: 'rgb(var(--foreground))',
-                    brandAccent: 'rgb(var(--foreground))',
+          {loading ? (
+            <div className="text-center py-4">
+              <p className="text-muted-foreground">Verifying credentials...</p>
+            </div>
+          ) : (
+            <Auth
+              supabaseClient={supabase}
+              appearance={{ 
+                theme: ThemeSupa,
+                variables: {
+                  default: {
+                    colors: {
+                      brand: 'rgb(var(--foreground))',
+                      brandAccent: 'rgb(var(--foreground))',
+                    },
                   },
                 },
-              },
-            }}
-            theme="light"
-            providers={[]}
-            redirectTo={window.location.origin + '/chef'}
-            onlyThirdPartyProviders={false}
-            magicLink={false}
-            showLinks={false}
-            view="sign_in"
-          />
+              }}
+              theme="light"
+              providers={[]}
+              redirectTo={window.location.origin + '/chef'}
+              onlyThirdPartyProviders={false}
+              magicLink={false}
+              showLinks={false}
+              view="sign_in"
+            />
+          )}
+        </div>
+
+        <div className="text-center text-sm text-muted-foreground">
+          <p>Only registered chefs can access this portal.</p>
+          <p>Contact admin if you need assistance.</p>
         </div>
       </div>
     </div>
