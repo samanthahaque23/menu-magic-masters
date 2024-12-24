@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface FoodItemFormProps {
   initialData?: any;
@@ -19,18 +20,55 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
     description: initialData?.description || '',
     dietary_preference: initialData?.dietary_preference || 'vegetarian',
     course_type: initialData?.course_type || 'starter',
+    image_url: initialData?.image_url || '',
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const { toast } = useToast();
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImageFile(e.target.files[0]);
+    }
+  };
+
+  const uploadImage = async (file: File) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('food-images')
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('food-images')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      let imageUrl = formData.image_url;
+
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+      }
+
+      const dataToSubmit = {
+        ...formData,
+        image_url: imageUrl,
+      };
+
       if (initialData) {
         const { error } = await supabase
           .from('food_items')
-          .update(formData)
+          .update(dataToSubmit)
           .eq('id', initialData.id);
 
         if (error) throw error;
@@ -41,7 +79,7 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
       } else {
         const { error } = await supabase
           .from('food_items')
-          .insert([formData]);
+          .insert([dataToSubmit]);
 
         if (error) throw error;
         toast({
@@ -109,6 +147,26 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
             <SelectItem value="desserts">Desserts</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="space-y-2">
+        {(formData.image_url || imageFile) && (
+          <div className="w-full max-w-[200px] mx-auto">
+            <AspectRatio ratio={1}>
+              <img
+                src={imageFile ? URL.createObjectURL(imageFile) : formData.image_url}
+                alt="Food preview"
+                className="rounded-md object-cover w-full h-full"
+              />
+            </AspectRatio>
+          </div>
+        )}
+        <Input
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          className="cursor-pointer"
+        />
       </div>
 
       <div className="flex justify-end space-x-2">
