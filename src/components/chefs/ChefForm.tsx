@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Label } from "@/components/ui/label";
 
 interface ChefFormProps {
   initialData?: any;
@@ -23,7 +24,6 @@ export const ChefForm = ({ initialData, onSuccess, onCancel }: ChefFormProps) =>
   const { toast } = useToast();
 
   const validateEmail = (email: string) => {
-    // More strict email validation
     const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(String(email).toLowerCase());
   };
@@ -101,19 +101,23 @@ export const ChefForm = ({ initialData, onSuccess, onCancel }: ChefFormProps) =>
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
+      <div className="space-y-2">
+        <Label htmlFor="name">Name</Label>
         <Input
-          placeholder="Name"
+          id="name"
+          placeholder="Enter chef's name"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           required
         />
       </div>
       
-      <div>
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
         <Input
+          id="email"
           type="email"
-          placeholder="Email"
+          placeholder="Enter email address"
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           required
@@ -121,10 +125,12 @@ export const ChefForm = ({ initialData, onSuccess, onCancel }: ChefFormProps) =>
       </div>
 
       {!initialData && (
-        <div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
           <Input
+            id="password"
             type="password"
-            placeholder="Password"
+            placeholder="Enter password"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             required
@@ -133,27 +139,33 @@ export const ChefForm = ({ initialData, onSuccess, onCancel }: ChefFormProps) =>
         </div>
       )}
 
-      <div>
+      <div className="space-y-2">
+        <Label htmlFor="speciality">Speciality</Label>
         <Input
-          placeholder="Speciality"
+          id="speciality"
+          placeholder="Enter chef's speciality"
           value={formData.speciality}
           onChange={(e) => setFormData({ ...formData, speciality: e.target.value })}
         />
       </div>
 
-      <div>
+      <div className="space-y-2">
+        <Label htmlFor="experience">Years of Experience</Label>
         <Input
+          id="experience"
           type="number"
-          placeholder="Years of Experience"
+          placeholder="Enter years of experience"
           value={formData.experience_years}
           onChange={(e) => setFormData({ ...formData, experience_years: e.target.value })}
         />
       </div>
 
-      <div>
+      <div className="space-y-2">
+        <Label htmlFor="phone">Phone Number</Label>
         <Input
+          id="phone"
           type="tel"
-          placeholder="Phone"
+          placeholder="Enter phone number"
           value={formData.phone}
           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
         />
