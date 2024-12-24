@@ -8,15 +8,35 @@ import { QuotationList } from './quotations/QuotationList';
 
 export const AdminDashboard = () => {
   return (
-    <div className="space-y-6">
-      <h2 className="text-3xl font-bold">Admin Dashboard</h2>
+    <div className="space-y-6 p-6">
+      <h2 className="text-3xl font-bold text-[#600000]">Admin Dashboard</h2>
       
       <Tabs defaultValue="food" className="w-full">
-        <TabsList>
-          <TabsTrigger value="food">Food Items</TabsTrigger>
-          <TabsTrigger value="customers">Customers</TabsTrigger>
-          <TabsTrigger value="chefs">Chefs</TabsTrigger>
-          <TabsTrigger value="quotations">Quotations</TabsTrigger>
+        <TabsList className="w-full justify-start border-b border-[#600000]/20">
+          <TabsTrigger 
+            value="food"
+            className="text-[#600000] data-[state=active]:border-[#600000]"
+          >
+            Food Items
+          </TabsTrigger>
+          <TabsTrigger 
+            value="customers"
+            className="text-[#600000] data-[state=active]:border-[#600000]"
+          >
+            Customers
+          </TabsTrigger>
+          <TabsTrigger 
+            value="chefs"
+            className="text-[#600000] data-[state=active]:border-[#600000]"
+          >
+            Chefs
+          </TabsTrigger>
+          <TabsTrigger 
+            value="quotations"
+            className="text-[#600000] data-[state=active]:border-[#600000]"
+          >
+            Quotations
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="food" className="mt-6">
