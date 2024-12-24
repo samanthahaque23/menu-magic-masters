@@ -70,6 +70,15 @@ export const useQuotes = (session: any) => {
 
   const handleQuoteSubmission = async (quoteId: string, price: number) => {
     try {
+      if (!session?.user?.id) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to submit a quote",
+        });
+        return;
+      }
+
       // First check if this chef has already submitted a quote
       const { data: existingQuotes, error: checkError } = await supabase
         .from('chef_quotes')
@@ -88,13 +97,32 @@ export const useQuotes = (session: any) => {
         return;
       }
 
+      // Verify the quote exists and is in pending status
+      const { data: quoteCheck, error: quoteCheckError } = await supabase
+        .from('quotes')
+        .select('quote_status')
+        .eq('id', quoteId)
+        .single();
+
+      if (quoteCheckError) throw quoteCheckError;
+
+      if (quoteCheck?.quote_status !== 'pending') {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "This quote is no longer accepting submissions",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('chef_quotes')
         .insert({
           quote_id: quoteId,
           chef_id: session.user.id,
           price: price,
-          is_visible_to_customer: true
+          is_visible_to_customer: true,
+          quote_status: 'pending'
         });
 
       if (error) throw error;
@@ -106,6 +134,7 @@ export const useQuotes = (session: any) => {
 
       queryClient.invalidateQueries({ queryKey: ['chef-quotes'] });
     } catch (error: any) {
+      console.error('Error submitting quote:', error);
       toast({
         variant: "destructive",
         title: "Error",
