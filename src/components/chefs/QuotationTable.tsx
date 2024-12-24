@@ -54,10 +54,16 @@ export const QuotationTable = ({
             >
               <TableCell className="text-[#600000]">
                 <div>
-                  <p className="font-medium">{quotation.profiles?.full_name || 'Unknown Customer'}</p>
-                  <p className="text-sm opacity-75">{quotation.profiles?.email}</p>
+                  <p className="font-medium">
+                    {quotation.profiles?.full_name || 'Unknown Customer'}
+                  </p>
+                  <p className="text-sm opacity-75">
+                    {quotation.profiles?.email}
+                  </p>
                   {quotation.profiles?.phone && (
-                    <p className="text-sm opacity-75">Phone: {quotation.profiles.phone}</p>
+                    <p className="text-sm opacity-75">
+                      Phone: {quotation.profiles.phone}
+                    </p>
                   )}
                 </div>
               </TableCell>
