@@ -29,7 +29,7 @@ export const QuoteList = ({ items, setItems }: QuoteListProps) => {
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[400px] text-primary/60">
+      <div className="flex flex-col items-center justify-center h-[400px] text-muted-foreground">
         <p>Your quote is empty</p>
         <p className="text-sm">Add items from the menu to get started</p>
       </div>
@@ -44,7 +44,7 @@ export const QuoteList = ({ items, setItems }: QuoteListProps) => {
             <div className="flex justify-between items-start py-4">
               <div className="space-y-1">
                 <h4 className="font-medium leading-none">{foodItem.name}</h4>
-                <p className="text-sm text-primary/60">
+                <p className="text-sm text-muted-foreground">
                   {foodItem.dietary_preference} • {foodItem.course_type}
                 </p>
               </div>

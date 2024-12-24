@@ -13,9 +13,9 @@ export const FoodCard = ({ item, onEdit, onDelete }: FoodCardProps) => {
     <Card className="p-6 hover:shadow-lg transition-shadow">
       <h3 className="text-xl font-semibold mb-2">{item.name}</h3>
       {item.description && (
-        <p className="text-primary/60 text-sm mb-4">{item.description}</p>
+        <p className="text-muted-foreground text-sm mb-4">{item.description}</p>
       )}
-      <div className="flex justify-between items-center text-sm text-primary/80 mb-4">
+      <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
         <span className="capitalize">{item.dietary_preference}</span>
         <span className="capitalize">{item.course_type}</span>
       </div>
