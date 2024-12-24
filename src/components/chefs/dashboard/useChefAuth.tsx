@@ -10,14 +10,27 @@ export const useChefAuth = () => {
   const [session, setSession] = useState<any>(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
       if (!session) {
         navigate('/chef/login');
-        return;
       }
+    });
 
-      setSession(session);
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  useEffect(() => {
+    const setupChefProfile = async () => {
+      if (!session?.user?.email) return;
 
       try {
         const { data: chefData, error: chefError } = await supabase
@@ -34,12 +47,11 @@ export const useChefAuth = () => {
             title: "Access Denied",
             description: "You are not registered as a chef.",
           });
-          await supabase.auth.signOut();
-          navigate('/chef/login');
+          await handleSignOut();
           return;
         }
 
-        const { data: profileData, error: profileError } = await supabase
+        const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
@@ -82,13 +94,18 @@ export const useChefAuth = () => {
       }
     };
 
-    checkAuth();
-  }, [navigate, toast]);
+    if (session?.user) {
+      setupChefProfile();
+    }
+  }, [session, toast]);
 
   const handleSignOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
+      setSession(null);
+      setChefName("");
       
       toast({
         title: "Success",
@@ -97,10 +114,11 @@ export const useChefAuth = () => {
       
       navigate('/chef/login');
     } catch (error: any) {
+      console.error('Sign out error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: "Failed to sign out. Please try again.",
       });
     }
   };
