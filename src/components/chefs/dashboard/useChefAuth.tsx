@@ -18,9 +18,10 @@ export const useChefAuth = () => {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       if (!session) {
+        setChefName("");
         navigate('/chef/login');
       }
     });
@@ -101,11 +102,14 @@ export const useChefAuth = () => {
 
   const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
+      // Clear local state first
       setSession(null);
       setChefName("");
+
+      // Then attempt to sign out from Supabase
+      await supabase.auth.signOut({
+        scope: 'local'  // Changed from 'global' to 'local'
+      });
       
       toast({
         title: "Success",
@@ -115,10 +119,12 @@ export const useChefAuth = () => {
       navigate('/chef/login');
     } catch (error: any) {
       console.error('Sign out error:', error);
+      // Even if there's an error, we should still clear local state and redirect
+      navigate('/chef/login');
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to sign out. Please try again.",
+        title: "Warning",
+        description: "Session ended. You have been logged out.",
       });
     }
   };
