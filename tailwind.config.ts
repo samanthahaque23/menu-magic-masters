@@ -26,10 +26,10 @@ export default {
         foreground: 'hsl(var(--foreground))',
         primary: {
           DEFAULT: '#FFFFFF',
-          foreground: '#800000'
+          foreground: '#600000'
         },
         secondary: {
-          DEFAULT: '#800000',
+          DEFAULT: '#600000',
           foreground: '#FFFFFF'
         },
         destructive: {
@@ -37,16 +37,16 @@ export default {
           foreground: 'hsl(var(--destructive-foreground))'
         },
         muted: {
-          DEFAULT: '#800000',
+          DEFAULT: '#600000',
           foreground: '#FFFFFF'
         },
         accent: {
           DEFAULT: '#FFFFFF',
-          foreground: '#800000'
+          foreground: '#600000'
         },
         card: {
           DEFAULT: '#FFFFFF',
-          foreground: '#800000'
+          foreground: '#600000'
         }
       },
       borderRadius: {

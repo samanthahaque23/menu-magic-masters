@@ -41,7 +41,7 @@ export const MenuSection = ({
                 <Button 
                   onClick={() => onAddToQuote(item)}
                   variant="secondary"
-                  className="gap-2 bg-secondary text-primary hover:bg-secondary/90"
+                  className="gap-2 bg-secondary text-primary hover:bg-secondary/90 hover:border hover:border-secondary"
                 >
                   <PlusCircle className="h-4 w-4" />
                   Add to Quote
