@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { FoodFilters } from '@/components/food/FoodFilters';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,10 +14,29 @@ interface MenuSectionProps {
 
 export const MenuSection = ({ 
   foodItems, 
-  onAddToQuote, 
-  onDietaryFilterChange, 
-  onCourseFilterChange 
+  onAddToQuote,
+  onDietaryFilterChange,
+  onCourseFilterChange
 }: MenuSectionProps) => {
+  const [dietaryFilter, setDietaryFilter] = useState('all');
+  const [courseFilter, setCourseFilter] = useState('all');
+
+  const filteredItems = foodItems?.filter(item => {
+    const matchesDietary = dietaryFilter === 'all' || item.dietary_preference === dietaryFilter;
+    const matchesCourse = courseFilter === 'all' || item.course_type === courseFilter;
+    return matchesDietary && matchesCourse;
+  });
+
+  const handleDietaryChange = (value: string) => {
+    setDietaryFilter(value);
+    onDietaryFilterChange(value);
+  };
+
+  const handleCourseChange = (value: string) => {
+    setCourseFilter(value);
+    onCourseFilterChange(value);
+  };
+
   return (
     <section id="menu-section" className="py-16 bg-accent">
       <div className="container mx-auto">
@@ -29,14 +49,14 @@ export const MenuSection = ({
         <div className="flex justify-center mb-8">
           <div className="bg-white/80 backdrop-blur-sm p-4 rounded-lg shadow-lg">
             <FoodFilters 
-              onDietaryFilterChange={onDietaryFilterChange}
-              onCourseFilterChange={onCourseFilterChange}
+              onDietaryFilterChange={handleDietaryChange}
+              onCourseFilterChange={handleCourseChange}
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {foodItems?.map((item) => (
+          {filteredItems?.map((item) => (
             <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow border-secondary/20">
               <AspectRatio ratio={16/9}>
                 <img
