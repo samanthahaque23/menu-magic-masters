@@ -123,7 +123,7 @@ export const QuotationTable = ({
                       <Button
                         size="sm"
                         onClick={() => handleSubmitQuote(quotation)}
-                        className="bg-[#600000] hover:bg-[#600000]/90"
+                        className="bg-[#600000] hover:bg-[#600000]/90 text-white"
                       >
                         <Check className="h-4 w-4 mr-1" />
                         Submit Quote
@@ -135,7 +135,7 @@ export const QuotationTable = ({
                   <Button
                     size="sm"
                     onClick={() => onStatusUpdate(quotation.id, 'approved', 'processing')}
-                    className="bg-[#600000] hover:bg-[#600000]/90"
+                    className="bg-[#600000] hover:bg-[#600000]/90 text-white"
                   >
                     Start Processing
                   </Button>
@@ -144,7 +144,7 @@ export const QuotationTable = ({
                   <Button
                     size="sm"
                     onClick={() => onStatusUpdate(quotation.id, 'approved', 'ready_to_deliver')}
-                    className="bg-[#600000] hover:bg-[#600000]/90"
+                    className="bg-[#600000] hover:bg-[#600000]/90 text-white"
                   >
                     Mark Ready
                   </Button>
