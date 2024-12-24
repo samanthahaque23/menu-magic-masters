@@ -1,17 +1,19 @@
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { PlusCircle, ShoppingCart } from "lucide-react";
-import { useState, useEffect } from "react";
-import { QuoteList } from "./QuoteList";
-import { QuoteForm } from "./QuoteForm";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { SignUpForm } from "./SignUpForm";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignInForm } from "./SignInForm";
+import { SignUpForm } from "./SignUpForm";
+import { QuoteForm } from "./QuoteForm";
+import { QuoteList } from "./QuoteList";
+import { HeroSection } from "./sections/HeroSection";
+import { MenuSection } from "./sections/MenuSection";
+import { FooterSection } from "./sections/FooterSection";
+import { ShoppingCart, UserCircle2 } from "lucide-react";
 
 export const RestaurantMenu = () => {
   const { toast } = useToast();
@@ -126,89 +128,90 @@ export const RestaurantMenu = () => {
   if (!isInitialized || isLoading) return <div className="text-center p-8">Loading...</div>;
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Restaurant Menu</h1>
-        <div className="flex gap-4">
-          {!user && (
-            <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
-              <DialogTrigger asChild>
-                <Button variant="outline">Sign In / Sign Up</Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Authentication</DialogTitle>
-                </DialogHeader>
-                <Tabs defaultValue="signin" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="signin">Sign In</TabsTrigger>
-                    <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="signin">
-                    <SignInForm onSuccess={handleAuthSuccess} />
-                  </TabsContent>
-                  <TabsContent value="signup">
-                    <SignUpForm onSuccess={handleAuthSuccess} />
-                  </TabsContent>
-                </Tabs>
-              </DialogContent>
-            </Dialog>
-          )}
-          <Sheet open={isQuoteOpen} onOpenChange={setIsQuoteOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <ShoppingCart className="h-4 w-4" />
-                Quote List ({quoteItems.reduce((acc, item) => acc + item.quantity, 0)})
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>Your Quote</SheetTitle>
-              </SheetHeader>
-              {showQuoteForm ? (
-                <QuoteForm items={quoteItems} onSuccess={handleQuoteSuccess} />
-              ) : (
-                <div className="space-y-4">
-                  <QuoteList items={quoteItems} setItems={setQuoteItems} />
-                  {quoteItems.length > 0 && (
-                    <Button 
-                      className="w-full" 
-                      onClick={() => setShowQuoteForm(true)}
-                    >
-                      Proceed to Quote Details
-                    </Button>
-                  )}
-                </div>
-              )}
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <nav className="bg-primary sticky top-0 z-50">
+        <div className="container mx-auto flex justify-between items-center py-4">
+          <h1 className="text-2xl font-bold text-white">Restaurant Manager</h1>
+          <div className="flex items-center gap-4">
+            <Sheet open={isQuoteOpen} onOpenChange={setIsQuoteOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" className="text-white gap-2">
+                  <ShoppingCart className="h-5 w-5" />
+                  <span>Quote ({quoteItems.reduce((acc, item) => acc + item.quantity, 0)})</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>Your Quote</SheetTitle>
+                </SheetHeader>
+                {showQuoteForm ? (
+                  <QuoteForm items={quoteItems} onSuccess={handleQuoteSuccess} />
+                ) : (
+                  <div className="space-y-4">
+                    <QuoteList items={quoteItems} setItems={setQuoteItems} />
+                    {quoteItems.length > 0 && (
+                      <Button 
+                        className="w-full" 
+                        onClick={() => setShowQuoteForm(true)}
+                      >
+                        Proceed to Quote Details
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </SheetContent>
+            </Sheet>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {foodItems?.map((item) => (
-          <Card key={item.id} className="p-6">
-            <h3 className="text-xl font-semibold mb-2">{item.name}</h3>
-            {item.description && (
-              <p className="text-muted-foreground text-sm mb-4">{item.description}</p>
-            )}
-            <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
-              <span className="capitalize">{item.dietary_preference}</span>
-              <span className="capitalize">{item.course_type}</span>
-            </div>
-            <div className="flex justify-end">
+            {!user ? (
+              <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" className="text-white gap-2">
+                    <UserCircle2 className="h-5 w-5" />
+                    <span>Sign In</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Authentication</DialogTitle>
+                  </DialogHeader>
+                  <Tabs defaultValue="signin" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="signin">Sign In</TabsTrigger>
+                      <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="signin">
+                      <SignInForm onSuccess={handleAuthSuccess} />
+                    </TabsContent>
+                    <TabsContent value="signup">
+                      <SignUpForm onSuccess={handleAuthSuccess} />
+                    </TabsContent>
+                  </Tabs>
+                </DialogContent>
+              </Dialog>
+            ) : (
               <Button 
-                onClick={() => handleAddToQuote(item)}
-                variant="secondary"
-                className="gap-2"
+                variant="ghost" 
+                className="text-white"
+                onClick={() => supabase.auth.signOut()}
               >
-                <PlusCircle className="h-4 w-4" />
-                Add to Quote
+                Sign Out
               </Button>
-            </div>
-          </Card>
-        ))}
-      </div>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      <main>
+        <HeroSection />
+        <MenuSection 
+          foodItems={foodItems}
+          onAddToQuote={handleAddToQuote}
+          onDietaryFilterChange={(value) => console.log('Dietary:', value)}
+          onCourseFilterChange={(value) => console.log('Course:', value)}
+        />
+      </main>
+
+      <FooterSection />
     </div>
   );
 };
