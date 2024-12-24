@@ -36,10 +36,30 @@ export const OrderProgress = ({ quoteStatus, orderStatus }: OrderProgressProps) 
   };
 
   const getStatusColor = (quoteStatus: QuoteStatus, orderStatus?: OrderStatus) => {
-    // Only use two colors: gray for pending/in-progress, green for completed
-    if (quoteStatus === 'rejected') return 'bg-gray-300';
-    if (orderStatus === 'received') return 'bg-green-500';
-    return 'bg-gray-300';
+    if (quoteStatus === 'rejected') return 'bg-red-500';
+    if (quoteStatus === 'pending') return 'bg-yellow-500';
+    if (quoteStatus === 'approved') {
+      if (!orderStatus) return 'bg-green-500';
+      switch (orderStatus) {
+        case 'pending_confirmation':
+          return 'bg-blue-500';
+        case 'confirmed':
+          return 'bg-green-500';
+        case 'processing':
+          return 'bg-purple-500';
+        case 'ready_to_deliver':
+          return 'bg-indigo-500';
+        case 'on_the_way':
+          return 'bg-orange-500';
+        case 'delivered':
+          return 'bg-teal-500';
+        case 'received':
+          return 'bg-emerald-500';
+        default:
+          return 'bg-gray-500';
+      }
+    }
+    return 'bg-gray-500';
   };
 
   const getDisplayStatus = (quoteStatus: QuoteStatus, orderStatus?: OrderStatus) => {
