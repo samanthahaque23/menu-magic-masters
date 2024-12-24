@@ -1,4 +1,4 @@
-import { FoodFilters } from '../FoodFilters';
+import { FoodFilters } from '@/components/food/FoodFilters';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
