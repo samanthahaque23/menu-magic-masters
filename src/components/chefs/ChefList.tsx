@@ -97,16 +97,16 @@ export const ChefList = () => {
                   <ChefHat className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold">{chef.name}</h3>
-                  <p className="text-sm text-muted-foreground">{chef.email}</p>
+                  <h3 className="font-semibold text-primary">{chef.name}</h3>
+                  <p className="text-sm text-primary">{chef.email}</p>
                   {chef.speciality && (
-                    <p className="text-sm text-muted-foreground">Speciality: {chef.speciality}</p>
+                    <p className="text-sm text-primary">Speciality: {chef.speciality}</p>
                   )}
                   {chef.experience_years && (
-                    <p className="text-sm text-muted-foreground">Experience: {chef.experience_years} years</p>
+                    <p className="text-sm text-primary">Experience: {chef.experience_years} years</p>
                   )}
                   {chef.phone && (
-                    <p className="text-sm text-muted-foreground">{chef.phone}</p>
+                    <p className="text-sm text-primary">{chef.phone}</p>
                   )}
                 </div>
                 <div className="flex space-x-2">
