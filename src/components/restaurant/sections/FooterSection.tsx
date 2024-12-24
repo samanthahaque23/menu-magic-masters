@@ -1,6 +1,6 @@
 export const FooterSection = () => {
   return (
-    <footer className="bg-secondary text-primary py-16">
+    <footer className="bg-primary text-secondary py-16">
       <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         <div>
           <h3 className="text-xl font-semibold mb-4">Contact Us</h3>
@@ -24,8 +24,8 @@ export const FooterSection = () => {
           </div>
         </div>
       </div>
-      <div className="container mx-auto mt-8 pt-8 border-t border-primary/20 text-center">
-        <p>&copy; 2024 Restaurant Name. All rights reserved.</p>
+      <div className="container mx-auto mt-8 pt-8 border-t border-secondary/20 text-center">
+        <p>&copy; 2024 Flavours From Home. All rights reserved.</p>
       </div>
     </footer>
   );
