@@ -39,11 +39,11 @@ export const RestaurantNav = ({
   return (
     <nav className="bg-primary/95 backdrop-blur-sm sticky top-0 z-50 border-b border-primary/20">
       <div className="container mx-auto flex justify-between items-center py-4">
-        <h1 className="text-2xl font-bold text-white">Flavours From Home</h1>
+        <h1 className="text-2xl font-bold text-secondary">Flavours From Home</h1>
         <div className="flex items-center gap-4">
           <Sheet open={isQuoteOpen} onOpenChange={setIsQuoteOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" className="text-white gap-2">
+              <Button variant="ghost" className="text-secondary gap-2">
                 <ShoppingCart className="h-5 w-5" />
                 <span>Quote ({quoteItems.reduce((acc, item) => acc + item.quantity, 0)})</span>
               </Button>
@@ -73,7 +73,7 @@ export const RestaurantNav = ({
           {!user ? (
             <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
               <DialogTrigger asChild>
-                <Button variant="ghost" className="text-white gap-2">
+                <Button variant="ghost" className="text-secondary gap-2">
                   <UserCircle2 className="h-5 w-5" />
                   <span>Sign In</span>
                 </Button>
@@ -99,7 +99,7 @@ export const RestaurantNav = ({
           ) : (
             <Button 
               variant="ghost" 
-              className="text-white"
+              className="text-secondary"
               onClick={() => supabase.auth.signOut()}
             >
               Sign Out
