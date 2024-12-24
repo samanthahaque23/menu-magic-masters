@@ -20,8 +20,8 @@ export const HeroSection = () => {
       >
         <div className="absolute inset-0 bg-black/60" />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4">
-          <h1 className="text-5xl font-bold mb-6 text-center text-primary">Flavours From Home</h1>
-          <p className="text-xl mb-8 max-w-2xl text-center text-primary">
+          <h1 className="text-5xl font-bold mb-6 text-center text-white">Flavours From Home</h1>
+          <p className="text-xl mb-8 max-w-2xl text-center text-white">
             Experience the authentic taste of Indian cuisine, where every dish tells a story of tradition and passion
           </p>
           <Button 
@@ -31,7 +31,7 @@ export const HeroSection = () => {
           >
             View Menu
           </Button>
-          <div className="mt-12 flex items-center gap-2 text-lg italic text-primary">
+          <div className="mt-12 flex items-center gap-2 text-lg italic text-white">
             <Quote className="h-6 w-6 transform scale-x-[-1]" />
             <p>Where every meal feels like home</p>
             <Quote className="h-6 w-6" />
