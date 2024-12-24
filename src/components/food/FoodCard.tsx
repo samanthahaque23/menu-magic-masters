@@ -22,7 +22,7 @@ export const FoodCard = ({ item, onEdit, onDelete }: FoodCardProps) => {
       <div className="p-6">
         <h3 className="text-xl font-semibold mb-2">{item.name}</h3>
         {item.description && (
-          <p className="text-muted-foreground text-sm mb-4">{item.description}</p>
+          <p className="text-primary mb-4">{item.description}</p>
         )}
         <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
           <span className="capitalize">{item.dietary_preference}</span>
