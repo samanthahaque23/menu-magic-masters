@@ -10,6 +10,16 @@ const HERO_IMAGES = [
 ];
 
 export const HeroSection = () => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <section className="relative h-[600px] mb-16">
       <Carousel className="w-full h-full">
@@ -22,9 +32,9 @@ export const HeroSection = () => {
               >
                 <div className="absolute inset-0 bg-black/50" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4">
-                  <h1 className="text-5xl font-bold mb-6">Exquisite Dining Experience</h1>
+                  <h1 className="text-5xl font-bold mb-6">Flavours From Home</h1>
                   <p className="text-xl mb-8 max-w-2xl text-center">
-                    Discover our carefully curated menu featuring the finest ingredients and expert craftsmanship
+                    Experience the authentic taste of home-cooked meals prepared with love and tradition
                   </p>
                   <Button 
                     size="lg"
@@ -34,7 +44,7 @@ export const HeroSection = () => {
                   </Button>
                   <div className="mt-12 flex items-center gap-2 text-lg italic">
                     <Quote className="h-6 w-6" />
-                    <p>"Where every flavor tells a story"</p>
+                    <p>Taste the love in every bite</p>
                     <Quote className="h-6 w-6" />
                   </div>
                 </div>

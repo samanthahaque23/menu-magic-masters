@@ -129,9 +129,9 @@ export const RestaurantMenu = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="bg-primary sticky top-0 z-50">
+      <nav className="bg-primary/95 backdrop-blur-sm sticky top-0 z-50 border-b border-primary/20">
         <div className="container mx-auto flex justify-between items-center py-4">
-          <h1 className="text-2xl font-bold text-white">Restaurant Manager</h1>
+          <h1 className="text-2xl font-bold text-white">Flavours From Home</h1>
           <div className="flex items-center gap-4">
             <Sheet open={isQuoteOpen} onOpenChange={setIsQuoteOpen}>
               <SheetTrigger asChild>
