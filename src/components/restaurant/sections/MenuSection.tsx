@@ -17,9 +17,9 @@ export const MenuSection = ({
   onCourseFilterChange 
 }: MenuSectionProps) => {
   return (
-    <section className="py-16 bg-accent">
+    <section id="menu-section" className="py-16 bg-accent">
       <div className="container mx-auto">
-        <h2 className="text-4xl font-bold text-center mb-12">Our Menu</h2>
+        <h2 className="text-4xl font-bold text-center mb-12 text-secondary">Our Menu</h2>
         <div className="flex justify-center mb-8">
           <FoodFilters 
             onDietaryFilterChange={onDietaryFilterChange}
@@ -28,12 +28,12 @@ export const MenuSection = ({
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {foodItems?.map((item) => (
-            <Card key={item.id} className="p-6 hover:shadow-lg transition-shadow">
-              <h3 className="text-xl font-semibold mb-2">{item.name}</h3>
+            <Card key={item.id} className="p-6 hover:shadow-lg transition-shadow border-secondary/20">
+              <h3 className="text-xl font-semibold mb-2 text-secondary">{item.name}</h3>
               {item.description && (
-                <p className="text-muted-foreground text-sm mb-4">{item.description}</p>
+                <p className="text-secondary/80 text-sm mb-4">{item.description}</p>
               )}
-              <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
+              <div className="flex justify-between items-center text-sm text-secondary/70 mb-4">
                 <span className="capitalize">{item.dietary_preference}</span>
                 <span className="capitalize">{item.course_type}</span>
               </div>
@@ -41,7 +41,7 @@ export const MenuSection = ({
                 <Button 
                   onClick={() => onAddToQuote(item)}
                   variant="secondary"
-                  className="gap-2"
+                  className="gap-2 bg-secondary text-primary hover:bg-secondary/90"
                 >
                   <PlusCircle className="h-4 w-4" />
                   Add to Quote

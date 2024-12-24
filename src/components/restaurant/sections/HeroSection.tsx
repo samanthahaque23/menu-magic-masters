@@ -2,6 +2,13 @@ import { Button } from '@/components/ui/button';
 import { Quote } from 'lucide-react';
 
 export const HeroSection = () => {
+  const scrollToMenu = () => {
+    const menuSection = document.getElementById('menu-section');
+    if (menuSection) {
+      menuSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section className="relative h-[600px] mb-16">
       <div 
@@ -19,7 +26,8 @@ export const HeroSection = () => {
           </p>
           <Button 
             size="lg"
-            className="bg-primary hover:bg-primary/90"
+            onClick={scrollToMenu}
+            className="bg-secondary hover:bg-secondary/90 text-primary"
           >
             View Menu
           </Button>
