@@ -58,22 +58,39 @@ export const ChefForm = ({ initialData, onSuccess, onCancel }: ChefFormProps) =>
           description: "Chef updated successfully",
         });
       } else {
+        // For new chef, first check if the email already exists
+        const { data: existingChef } = await supabase
+          .from('chefs')
+          .select('*')
+          .eq('email', formData.email.trim().toLowerCase())
+          .maybeSingle();
+
+        if (existingChef) {
+          throw new Error("A chef with this email already exists");
+        }
+
         if (!formData.password || formData.password.length < 6) {
           throw new Error("Password must be at least 6 characters long");
         }
 
         // Create new chef with auth account
         const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: formData.email.trim().toLowerCase(), // Normalize email
+          email: formData.email.trim().toLowerCase(),
           password: formData.password,
           options: {
             data: {
               role: 'chef',
+              full_name: formData.name
             }
           }
         });
 
-        if (authError) throw authError;
+        if (authError) {
+          if (authError.message.includes("User already registered")) {
+            throw new Error("This email is already registered. Please use a different email address.");
+          }
+          throw authError;
+        }
 
         // Create chef record
         const { error: chefError } = await supabase
