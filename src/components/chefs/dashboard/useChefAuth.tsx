@@ -87,8 +87,17 @@ export const useChefAuth = () => {
 
   const handleSignOut = async () => {
     try {
+      // First clear the session state
+      setSession(null);
+      setChefName("");
+      
+      // Then attempt to sign out
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.error('Sign out error:', error);
+        // Even if there's an error, we'll redirect to login
+        // since we've already cleared the local session
+      }
       
       toast({
         title: "Success",
@@ -97,11 +106,10 @@ export const useChefAuth = () => {
       
       navigate('/chef/login');
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
+      console.error('Sign out error:', error);
+      // Even if there's an error, redirect to login
+      // since we've already cleared the local session
+      navigate('/chef/login');
     }
   };
 
