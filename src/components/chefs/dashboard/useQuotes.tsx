@@ -41,15 +41,18 @@ export const useQuotes = (session: any) => {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching quotes:', error);
+        throw error;
+      }
 
       // Filter quotes to show:
-      // 1. All pending quotes from customers
+      // 1. All pending quotes that don't have a chef assigned
       // 2. Quotes specifically assigned to this chef
       // 3. Quotes where this chef has submitted a quote
       return quotes?.filter(quote => {
-        // Show all pending quotes to all chefs initially
-        if (quote.quote_status === 'pending') return true;
+        // Show all pending quotes that don't have a chef assigned
+        if (quote.quote_status === 'pending' && !quote.chef_id) return true;
         
         // Show quotes assigned to this specific chef
         if (quote.chef_id === session.user.id) return true;
