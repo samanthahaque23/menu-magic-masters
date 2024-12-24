@@ -19,13 +19,21 @@ export const MenuSection = ({
   return (
     <section id="menu-section" className="py-16 bg-accent">
       <div className="container mx-auto">
-        <h2 className="text-4xl font-bold text-center mb-12 text-secondary">Our Menu</h2>
-        <div className="flex justify-center mb-8">
-          <FoodFilters 
-            onDietaryFilterChange={onDietaryFilterChange}
-            onCourseFilterChange={onCourseFilterChange}
-          />
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-bold text-secondary mb-4 font-['Proza_Libre']">Our Menu</h2>
+          <div className="w-24 h-1 bg-secondary mx-auto mb-4"></div>
+          <p className="text-secondary/80 text-lg">Discover our carefully curated selection of dishes</p>
         </div>
+        
+        <div className="flex justify-center mb-12">
+          <div className="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-lg">
+            <FoodFilters 
+              onDietaryFilterChange={onDietaryFilterChange}
+              onCourseFilterChange={onCourseFilterChange}
+            />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {foodItems?.map((item) => (
             <Card key={item.id} className="p-6 hover:shadow-lg transition-shadow border-secondary/20">
