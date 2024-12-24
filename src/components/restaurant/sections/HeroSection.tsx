@@ -11,7 +11,7 @@ export const HeroSection = () => {
           backgroundPosition: 'center 40%'
         }}
       >
-        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-primary/60" />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4">
           <h1 className="text-5xl font-bold mb-6 text-center">Flavours From Home</h1>
           <p className="text-xl mb-8 max-w-2xl text-center">
@@ -19,7 +19,7 @@ export const HeroSection = () => {
           </p>
           <Button 
             size="lg"
-            className="bg-primary hover:bg-primary/90"
+            className="bg-primary hover:bg-primary/90 text-white"
           >
             View Menu
           </Button>

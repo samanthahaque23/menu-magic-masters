@@ -19,35 +19,39 @@ export default {
     },
     extend: {
       colors: {
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
+        border: '#800000',
+        input: '#800000',
+        ring: '#800000',
+        background: '#FFFFFF',
+        foreground: '#800000',
         primary: {
           DEFAULT: '#800000',
           foreground: '#FFFFFF'
         },
         secondary: {
-          DEFAULT: '#4A4A4A',
+          DEFAULT: '#800000',
           foreground: '#FFFFFF'
         },
         destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))'
+          DEFAULT: '#800000',
+          foreground: '#FFFFFF'
         },
         muted: {
-          DEFAULT: '#F5F5F5',
-          foreground: '#666666'
+          DEFAULT: '#FFFFFF',
+          foreground: '#800000'
         },
         accent: {
-          DEFAULT: '#F5F5F5',
-          foreground: '#333333'
+          DEFAULT: '#FFFFFF',
+          foreground: '#800000'
         },
         card: {
           DEFAULT: '#FFFFFF',
-          foreground: '#333333'
+          foreground: '#800000'
         }
+      },
+      fontFamily: {
+        sans: ['Lato', 'sans-serif'],
+        serif: ['Playfair Display', 'serif'],
       },
       borderRadius: {
         lg: 'var(--radius)',

@@ -37,20 +37,20 @@ export const RestaurantNav = ({
   handleAuthSuccess
 }: RestaurantNavProps) => {
   return (
-    <nav className="bg-primary/95 backdrop-blur-sm sticky top-0 z-50 border-b border-primary/20">
+    <nav className="bg-primary sticky top-0 z-50 border-b border-white/20">
       <div className="container mx-auto flex justify-between items-center py-4">
-        <h1 className="text-2xl font-bold text-white">Flavours From Home</h1>
+        <h1 className="text-2xl font-serif font-bold text-white">Flavours From Home</h1>
         <div className="flex items-center gap-4">
           <Sheet open={isQuoteOpen} onOpenChange={setIsQuoteOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" className="text-white gap-2">
+              <Button variant="ghost" className="text-white gap-2 hover:bg-white/10">
                 <ShoppingCart className="h-5 w-5" />
                 <span>Quote ({quoteItems.reduce((acc, item) => acc + item.quantity, 0)})</span>
               </Button>
             </SheetTrigger>
             <SheetContent>
               <SheetHeader>
-                <SheetTitle>Your Quote</SheetTitle>
+                <SheetTitle className="font-serif">Your Quote</SheetTitle>
               </SheetHeader>
               {showQuoteForm ? (
                 <QuoteForm items={quoteItems} onSuccess={handleQuoteSuccess} />
@@ -59,7 +59,7 @@ export const RestaurantNav = ({
                   <QuoteList items={quoteItems} setItems={setQuoteItems} />
                   {quoteItems.length > 0 && (
                     <Button 
-                      className="w-full" 
+                      className="w-full bg-primary text-white hover:bg-primary/90" 
                       onClick={() => setShowQuoteForm(true)}
                     >
                       Proceed to Quote Details
@@ -73,14 +73,14 @@ export const RestaurantNav = ({
           {!user ? (
             <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
               <DialogTrigger asChild>
-                <Button variant="ghost" className="text-white gap-2">
+                <Button variant="ghost" className="text-white gap-2 hover:bg-white/10">
                   <UserCircle2 className="h-5 w-5" />
                   <span>Sign In</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Authentication</DialogTitle>
+                  <DialogTitle className="font-serif">Authentication</DialogTitle>
                 </DialogHeader>
                 <Tabs defaultValue="signin" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
@@ -99,7 +99,7 @@ export const RestaurantNav = ({
           ) : (
             <Button 
               variant="ghost" 
-              className="text-white"
+              className="text-white hover:bg-white/10"
               onClick={() => supabase.auth.signOut()}
             >
               Sign Out
