@@ -2,18 +2,10 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SignInForm } from "./SignInForm";
-import { SignUpForm } from "./SignUpForm";
-import { QuoteForm } from "./QuoteForm";
-import { QuoteList } from "./QuoteList";
+import { RestaurantNav } from "./navigation/RestaurantNav";
 import { HeroSection } from "./sections/HeroSection";
 import { MenuSection } from "./sections/MenuSection";
 import { FooterSection } from "./sections/FooterSection";
-import { ShoppingCart, UserCircle2 } from "lucide-react";
 
 export const RestaurantMenu = () => {
   const { toast } = useToast();
@@ -43,7 +35,6 @@ export const RestaurantMenu = () => {
             });
           } else if (event === 'SIGNED_OUT') {
             setUser(null);
-            // Clear any user-specific state
             setQuoteItems([]);
             setShowQuoteForm(false);
             setIsQuoteOpen(false);
@@ -129,77 +120,19 @@ export const RestaurantMenu = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="bg-primary/95 backdrop-blur-sm sticky top-0 z-50 border-b border-primary/20">
-        <div className="container mx-auto flex justify-between items-center py-4">
-          <h1 className="text-2xl font-bold text-white">Flavours From Home</h1>
-          <div className="flex items-center gap-4">
-            <Sheet open={isQuoteOpen} onOpenChange={setIsQuoteOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" className="text-white gap-2">
-                  <ShoppingCart className="h-5 w-5" />
-                  <span>Quote ({quoteItems.reduce((acc, item) => acc + item.quantity, 0)})</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Your Quote</SheetTitle>
-                </SheetHeader>
-                {showQuoteForm ? (
-                  <QuoteForm items={quoteItems} onSuccess={handleQuoteSuccess} />
-                ) : (
-                  <div className="space-y-4">
-                    <QuoteList items={quoteItems} setItems={setQuoteItems} />
-                    {quoteItems.length > 0 && (
-                      <Button 
-                        className="w-full" 
-                        onClick={() => setShowQuoteForm(true)}
-                      >
-                        Proceed to Quote Details
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </SheetContent>
-            </Sheet>
-
-            {!user ? (
-              <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" className="text-white gap-2">
-                    <UserCircle2 className="h-5 w-5" />
-                    <span>Sign In</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Authentication</DialogTitle>
-                  </DialogHeader>
-                  <Tabs defaultValue="signin" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="signin">Sign In</TabsTrigger>
-                      <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="signin">
-                      <SignInForm onSuccess={handleAuthSuccess} />
-                    </TabsContent>
-                    <TabsContent value="signup">
-                      <SignUpForm onSuccess={handleAuthSuccess} />
-                    </TabsContent>
-                  </Tabs>
-                </DialogContent>
-              </Dialog>
-            ) : (
-              <Button 
-                variant="ghost" 
-                className="text-white"
-                onClick={() => supabase.auth.signOut()}
-              >
-                Sign Out
-              </Button>
-            )}
-          </div>
-        </div>
-      </nav>
+      <RestaurantNav 
+        user={user}
+        quoteItems={quoteItems}
+        isQuoteOpen={isQuoteOpen}
+        showQuoteForm={showQuoteForm}
+        showAuthDialog={showAuthDialog}
+        setIsQuoteOpen={setIsQuoteOpen}
+        setShowQuoteForm={setShowQuoteForm}
+        setShowAuthDialog={setShowAuthDialog}
+        setQuoteItems={setQuoteItems}
+        handleQuoteSuccess={handleQuoteSuccess}
+        handleAuthSuccess={handleAuthSuccess}
+      />
 
       <main>
         <HeroSection />
