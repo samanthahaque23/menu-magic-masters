@@ -39,7 +39,7 @@ export const RestaurantNav = ({
   return (
     <nav className="bg-primary/95 backdrop-blur-sm sticky top-0 z-50 border-b border-primary/20">
       <div className="container mx-auto flex justify-between items-center py-4">
-        <h1 className="text-2xl font-bold text-secondary">Flavours From Home</h1>
+        <h1 className="text-[24px] font-bold text-secondary font-['Proza_Libre']">Flavours From Home</h1>
         <div className="flex items-center gap-4">
           <Sheet open={isQuoteOpen} onOpenChange={setIsQuoteOpen}>
             <SheetTrigger asChild>
