@@ -28,7 +28,6 @@ export const QuotationTable = ({
     
     onQuoteSubmit(quotation.id, price);
     
-    // Clear the price input
     setPrices(prev => ({
       ...prev,
       [quotation.id]: ''
@@ -36,30 +35,33 @@ export const QuotationTable = ({
   };
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border border-[#600000]/10">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Customer</TableHead>
-            <TableHead>Party Details</TableHead>
-            <TableHead>Menu Items</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
+          <TableRow className="bg-[#600000]/5">
+            <TableHead className="text-[#600000] font-semibold">Customer</TableHead>
+            <TableHead className="text-[#600000] font-semibold">Party Details</TableHead>
+            <TableHead className="text-[#600000] font-semibold">Menu Items</TableHead>
+            <TableHead className="text-[#600000] font-semibold">Status</TableHead>
+            <TableHead className="text-[#600000] font-semibold">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {quotations?.map((quotation) => (
-            <TableRow key={quotation.id}>
-              <TableCell>
+            <TableRow 
+              key={quotation.id}
+              className="border-b border-[#600000]/10"
+            >
+              <TableCell className="text-[#600000]">
                 <div>
                   <p className="font-medium">{quotation.profiles?.full_name || 'Unknown Customer'}</p>
-                  <p className="text-sm text-muted-foreground">{quotation.profiles?.email}</p>
+                  <p className="text-sm opacity-75">{quotation.profiles?.email}</p>
                   {quotation.profiles?.phone && (
-                    <p className="text-sm text-muted-foreground">Phone: {quotation.profiles.phone}</p>
+                    <p className="text-sm opacity-75">Phone: {quotation.profiles.phone}</p>
                   )}
                 </div>
               </TableCell>
-              <TableCell>
+              <TableCell className="text-[#600000]">
                 <div>
                   <p>Date: {quotation.party_date ? format(new Date(quotation.party_date), 'PPP') : 'N/A'}</p>
                   <p>Location: {quotation.party_location}</p>
@@ -82,13 +84,13 @@ export const QuotationTable = ({
                   )}
                 </div>
               </TableCell>
-              <TableCell>
-                <Card className="p-2">
+              <TableCell className="text-[#600000]">
+                <Card className="p-2 border border-[#600000]/10">
                   <ul className="text-sm space-y-1">
                     {quotation.quote_items?.map((item, index) => (
                       <li key={index}>
                         {item.food_items?.name} x{item.quantity}
-                        <span className="text-xs ml-2 text-muted-foreground">
+                        <span className="text-xs ml-2 opacity-75">
                           ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
                         </span>
                       </li>
@@ -96,7 +98,7 @@ export const QuotationTable = ({
                   </ul>
                 </Card>
               </TableCell>
-              <TableCell>
+              <TableCell className="text-[#600000]">
                 <OrderProgress 
                   quoteStatus={quotation.quote_status} 
                   orderStatus={quotation.order_status}
@@ -114,13 +116,14 @@ export const QuotationTable = ({
                           ...prev,
                           [quotation.id]: e.target.value
                         }))}
-                        className="w-32"
+                        className="w-32 border-[#600000]/20 text-[#600000]"
                       />
                     </div>
                     <div className="flex space-x-2">
                       <Button
                         size="sm"
                         onClick={() => handleSubmitQuote(quotation)}
+                        className="bg-[#600000] hover:bg-[#600000]/90"
                       >
                         <Check className="h-4 w-4 mr-1" />
                         Submit Quote
@@ -132,6 +135,7 @@ export const QuotationTable = ({
                   <Button
                     size="sm"
                     onClick={() => onStatusUpdate(quotation.id, 'approved', 'processing')}
+                    className="bg-[#600000] hover:bg-[#600000]/90"
                   >
                     Start Processing
                   </Button>
@@ -140,6 +144,7 @@ export const QuotationTable = ({
                   <Button
                     size="sm"
                     onClick={() => onStatusUpdate(quotation.id, 'approved', 'ready_to_deliver')}
+                    className="bg-[#600000] hover:bg-[#600000]/90"
                   >
                     Mark Ready
                   </Button>

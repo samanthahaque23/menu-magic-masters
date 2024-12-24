@@ -11,20 +11,27 @@ export const ChefDashboard = () => {
   if (isLoading) return <div>Loading...</div>;
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 px-4">
       <ChefHeader chefName={chefName} onSignOut={handleSignOut} />
       
       <Tabs defaultValue="quotes" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="quotes">Quotes</TabsTrigger>
+        <TabsList className="w-full justify-start border-b border-[#600000]/20">
+          <TabsTrigger 
+            value="quotes" 
+            className="text-[#600000] data-[state=active]:border-[#600000]"
+          >
+            Quotes
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="quotes">
-          <QuotationTable 
-            quotations={quotes || []} 
-            onStatusUpdate={handleStatusUpdate}
-            onQuoteSubmit={handleQuoteSubmission}
-          />
+        <TabsContent value="quotes" className="mt-6">
+          <div className="bg-white rounded-lg shadow-sm">
+            <QuotationTable 
+              quotations={quotes || []} 
+              onStatusUpdate={handleStatusUpdate}
+              onQuoteSubmit={handleQuoteSubmission}
+            />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
