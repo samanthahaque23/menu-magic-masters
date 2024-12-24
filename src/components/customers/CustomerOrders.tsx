@@ -43,7 +43,7 @@ export const CustomerOrders = ({ orders, refetch }) => {
     }
   };
 
-  const handleStatusUpdate = async (id: string, action: 'received' | 'confirm') => {
+  const handleStatusUpdate = async (id: string, action: 'received' | 'confirm', selectedChefQuote?: any) => {
     try {
       const updateData = action === 'received' 
         ? { 
@@ -52,7 +52,8 @@ export const CustomerOrders = ({ orders, refetch }) => {
         : { 
             is_confirmed: true, 
             order_status: 'confirmed' as const,
-            quote_status: 'approved' as const 
+            quote_status: 'approved' as const,
+            chef_id: selectedChefQuote?.chef_id // Add the selected chef's ID
           };
 
       const { error } = await supabase
@@ -158,7 +159,21 @@ export const CustomerOrders = ({ orders, refetch }) => {
                 <Button
                   variant="default"
                   className="w-full"
-                  onClick={() => handleStatusUpdate(order.id, 'confirm')}
+                  onClick={() => {
+                    // Find the approved chef quote
+                    const approvedChefQuote = order.chef_quotes?.find(
+                      quote => quote.quote_status === 'approved'
+                    );
+                    if (!approvedChefQuote) {
+                      toast({
+                        variant: "destructive",
+                        title: "Error",
+                        description: "Please select a chef quote first",
+                      });
+                      return;
+                    }
+                    handleStatusUpdate(order.id, 'confirm', approvedChefQuote);
+                  }}
                 >
                   Confirm Order (${order.total_price})
                 </Button>
