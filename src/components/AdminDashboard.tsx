@@ -12,28 +12,28 @@ export const AdminDashboard = () => {
       <h2 className="text-3xl font-bold text-[#600000]">Admin Dashboard</h2>
       
       <Tabs defaultValue="food" className="w-full">
-        <TabsList className="w-full justify-start border-b border-[#600000]/20">
+        <TabsList className="w-full justify-start border-b border-[#600000]/20 bg-[#600000]">
           <TabsTrigger 
             value="food"
-            className="text-[#600000] data-[state=active]:border-[#600000]"
+            className="text-white data-[state=active]:bg-[#600000]/80 data-[state=active]:text-white"
           >
             Food Items
           </TabsTrigger>
           <TabsTrigger 
             value="customers"
-            className="text-[#600000] data-[state=active]:border-[#600000]"
+            className="text-white data-[state=active]:bg-[#600000]/80 data-[state=active]:text-white"
           >
             Customers
           </TabsTrigger>
           <TabsTrigger 
             value="chefs"
-            className="text-[#600000] data-[state=active]:border-[#600000]"
+            className="text-white data-[state=active]:bg-[#600000]/80 data-[state=active]:text-white"
           >
             Chefs
           </TabsTrigger>
           <TabsTrigger 
             value="quotations"
-            className="text-[#600000] data-[state=active]:border-[#600000]"
+            className="text-white data-[state=active]:bg-[#600000]/80 data-[state=active]:text-white"
           >
             Quotations
           </TabsTrigger>
