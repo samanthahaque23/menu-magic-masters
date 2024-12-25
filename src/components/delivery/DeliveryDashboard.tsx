@@ -62,16 +62,7 @@ export const DeliveryDashboard = () => {
     navigate('/');
   };
 
-  if (isLoading) return <div>Loading...</div>;
-
-  return (
-    <div className="min-h-screen bg-background">
-      <DashboardNav userName={deliveryName} onSignOut={handleSignOut} />
-      <div className="container mx-auto py-8">
-        <h2 className="text-3xl font-bold mb-6">Delivery Dashboard</h2>
-        <DeliveryList 
-          orders={orders || []}
-          onStatusUpdate={(id, type, newStatus) => {
+  const handleStatusUpdate = async (id: string, type: 'quote', newStatus: 'on_the_way' | 'delivered'): Promise<void> => {
     try {
       const { error } = await supabase
         .from('quotes')
@@ -93,7 +84,18 @@ export const DeliveryDashboard = () => {
         description: error.message,
       });
     }
-          }}
+  };
+
+  if (isLoading) return <div>Loading...</div>;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <DashboardNav userName={deliveryName} onSignOut={handleSignOut} />
+      <div className="container mx-auto py-8">
+        <h2 className="text-3xl font-bold mb-6">Delivery Dashboard</h2>
+        <DeliveryList 
+          orders={orders || []}
+          onStatusUpdate={handleStatusUpdate}
         />
       </div>
     </div>
