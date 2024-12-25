@@ -2,12 +2,13 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, UserCircle2 } from "lucide-react";
+import { Menu, ShoppingCart, UserCircle2 } from "lucide-react";
 import { SignInForm } from "../SignInForm";
 import { SignUpForm } from "../SignUpForm";
 import { QuoteList } from "../QuoteList";
 import { QuoteForm } from "../QuoteForm";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 interface RestaurantNavProps {
   user: any;
@@ -36,11 +37,63 @@ export const RestaurantNav = ({
   handleQuoteSuccess,
   handleAuthSuccess
 }: RestaurantNavProps) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <nav className="bg-primary/95 backdrop-blur-sm sticky top-0 z-50 border-b border-primary/20">
-      <div className="container mx-auto flex justify-between items-center py-4">
-        <h1 className="text-[24px] font-bold text-secondary font-['Proza_Libre']">Flavours From Home</h1>
-        <div className="flex items-center gap-4">
+      <div className="container mx-auto flex justify-between items-center py-4 px-4">
+        <h1 className="text-[20px] md:text-[24px] font-bold text-secondary font-['Proza_Libre']">Flavours From Home</h1>
+        
+        {/* Mobile Menu */}
+        <div className="flex md:hidden">
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-secondary">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px]">
+              <div className="flex flex-col gap-4 pt-4">
+                <Button 
+                  variant="ghost" 
+                  className="text-primary w-full justify-start gap-2"
+                  onClick={() => {
+                    setIsQuoteOpen(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  <span>Quote ({quoteItems.reduce((acc, item) => acc + item.quantity, 0)})</span>
+                </Button>
+                
+                {!user ? (
+                  <Button 
+                    variant="ghost" 
+                    className="text-primary w-full justify-start gap-2"
+                    onClick={() => {
+                      setShowAuthDialog(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    <UserCircle2 className="h-5 w-5" />
+                    <span>Sign In</span>
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="ghost" 
+                    className="text-primary w-full justify-start"
+                    onClick={() => supabase.auth.signOut()}
+                  >
+                    Sign Out
+                  </Button>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* Desktop Menu */}
+        <div className="hidden md:flex items-center gap-4">
           <Sheet open={isQuoteOpen} onOpenChange={setIsQuoteOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" className="text-secondary gap-2">

@@ -7,11 +7,11 @@ interface FoodFiltersProps {
 
 export const FoodFilters = ({ onDietaryFilterChange, onCourseFilterChange }: FoodFiltersProps) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-6">
+    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
       <div className="space-y-2">
         <label className="text-secondary font-medium">Dietary Preference</label>
         <Select onValueChange={onDietaryFilterChange} defaultValue="all">
-          <SelectTrigger className="w-[200px] bg-white border-secondary/20 hover:border-secondary/40 transition-colors">
+          <SelectTrigger className="w-full sm:w-[200px] bg-white border-secondary/20 hover:border-secondary/40 transition-colors">
             <SelectValue placeholder="Select preference" />
           </SelectTrigger>
           <SelectContent className="bg-white border-secondary/20">
@@ -25,7 +25,7 @@ export const FoodFilters = ({ onDietaryFilterChange, onCourseFilterChange }: Foo
       <div className="space-y-2">
         <label className="text-secondary font-medium">Course Type</label>
         <Select onValueChange={onCourseFilterChange} defaultValue="all">
-          <SelectTrigger className="w-[200px] bg-white border-secondary/20 hover:border-secondary/40 transition-colors">
+          <SelectTrigger className="w-full sm:w-[200px] bg-white border-secondary/20 hover:border-secondary/40 transition-colors">
             <SelectValue placeholder="Select course" />
           </SelectTrigger>
           <SelectContent className="bg-white border-secondary/20">
