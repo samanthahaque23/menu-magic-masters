@@ -53,7 +53,7 @@ export const CustomerOrders = ({ orders, refetch }) => {
             is_confirmed: true, 
             order_status: 'confirmed' as const,
             quote_status: 'approved' as const,
-            chef_id: selectedChefQuote?.chef_id
+            chef_id: selectedChefQuote?.chef_id // Add the selected chef's ID
           };
 
       const { error } = await supabase
@@ -127,7 +127,7 @@ export const CustomerOrders = ({ orders, refetch }) => {
                               <span className="ml-2 text-green-500">(Selected)</span>
                             )}
                           </div>
-                          {order.quote_status === 'pending' && !order.is_confirmed && (
+                          {!order.is_confirmed && order.quote_status !== 'approved' && (
                             <Button
                               size="sm"
                               onClick={() => handleQuoteSelection(order.id, chefQuote.id, chefQuote.price)}
@@ -155,11 +155,12 @@ export const CustomerOrders = ({ orders, refetch }) => {
                   Mark as Received
                 </Button>
               )}
-              {order.total_price && !order.is_confirmed && (
+              {order.total_price && !order.is_confirmed && order.quote_status === 'pending' && (
                 <Button
                   variant="default"
                   className="w-full"
                   onClick={() => {
+                    // Find the approved chef quote
                     const approvedChefQuote = order.chef_quotes?.find(
                       quote => quote.quote_status === 'approved'
                     );
