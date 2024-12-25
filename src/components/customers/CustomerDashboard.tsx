@@ -1,19 +1,32 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CustomerOrders } from "./CustomerOrders";
 import { useToast } from "@/hooks/use-toast";
+import { DashboardNav } from "../shared/DashboardNav";
 
 export const CustomerDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [customerName, setCustomerName] = useState("");
 
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate('/restaurant');
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profile) {
+        setCustomerName(profile.full_name);
       }
     };
     checkAuth();
@@ -63,6 +76,11 @@ export const CustomerDashboard = () => {
     },
   });
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/restaurant');
+  };
+
   if (isLoading) return <div className="flex items-center justify-center p-8">Loading...</div>;
 
   if (error) return (
@@ -72,9 +90,12 @@ export const CustomerDashboard = () => {
   );
 
   return (
-    <div className="container mx-auto py-8">
-      <h2 className="text-3xl font-bold mb-6">My Orders</h2>
-      <CustomerOrders orders={orders} refetch={refetch} />
+    <div className="min-h-screen bg-background">
+      <DashboardNav userName={customerName} onSignOut={handleSignOut} />
+      <div className="container mx-auto py-8">
+        <h2 className="text-3xl font-bold mb-6">My Orders</h2>
+        <CustomerOrders orders={orders} refetch={refetch} />
+      </div>
     </div>
   );
 };
