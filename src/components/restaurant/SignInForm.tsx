@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface SignInFormData {
   email: string;
@@ -18,19 +19,31 @@ interface SignInFormProps {
 export const SignInForm = ({ onSuccess }: SignInFormProps) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { register, handleSubmit, formState: { errors } } = useForm<SignInFormData>();
 
   const onSubmit = async (data: SignInFormData) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
 
-      if (error) throw error;
+      if (signInError) throw signInError;
 
-      onSuccess();
+      // Fetch user profile to get role
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('email', data.email)
+        .single();
+
+      if (profile?.role === 'customer') {
+        navigate('/customer');
+      } else {
+        onSuccess();
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
