@@ -4,12 +4,23 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { OrderProgress } from "../chefs/OrderProgress";
 import { format } from "date-fns";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 export const CustomerOrders = ({ orders, refetch }) => {
   const { toast } = useToast();
 
   const handleQuoteSelection = async (quoteId: string, chefQuoteId: string, price: number) => {
     try {
+      // Reset all chef quotes to pending first
+      const { error: resetError } = await supabase
+        .from('chef_quotes')
+        .update({ quote_status: 'pending' })
+        .eq('quote_id', quoteId);
+
+      if (resetError) throw resetError;
+
+      // Then approve the selected quote
       const { error: chefQuoteError } = await supabase
         .from('chef_quotes')
         .update({ quote_status: 'approved' })
@@ -115,30 +126,30 @@ export const CustomerOrders = ({ orders, refetch }) => {
               {order.chef_quotes && order.chef_quotes.length > 0 && (
                 <div className="mt-4">
                   <h3 className="font-semibold mb-2">Chef Quotes</h3>
-                  <ul className="space-y-2">
+                  <RadioGroup
+                    defaultValue={order.chef_quotes.find(q => q.quote_status === 'approved')?.id}
+                    className="space-y-2"
+                  >
                     {order.chef_quotes
                       .filter(quote => quote.is_visible_to_customer)
                       .map((chefQuote) => (
-                        <li key={chefQuote.id} className="flex items-center justify-between">
-                          <div>
-                            <span>{chefQuote.profiles?.full_name}</span>
-                            <span className="ml-2 font-semibold">${chefQuote.price}</span>
-                            {chefQuote.quote_status === 'approved' && (
-                              <span className="ml-2 text-green-500">(Selected)</span>
-                            )}
-                          </div>
-                          {!order.is_confirmed && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleQuoteSelection(order.id, chefQuote.id, chefQuote.price)}
-                              variant={chefQuote.quote_status === 'approved' ? 'secondary' : 'default'}
-                            >
-                              {chefQuote.quote_status === 'approved' ? 'Selected' : 'Select Quote'}
-                            </Button>
-                          )}
-                        </li>
+                        <div key={chefQuote.id} className="flex items-center space-x-2">
+                          <RadioGroupItem
+                            value={chefQuote.id}
+                            id={chefQuote.id}
+                            disabled={order.is_confirmed}
+                            onClick={() => !order.is_confirmed && 
+                              handleQuoteSelection(order.id, chefQuote.id, chefQuote.price)}
+                          />
+                          <Label htmlFor={chefQuote.id} className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <span>{chefQuote.profiles?.full_name}</span>
+                              <span className="font-semibold">${chefQuote.price}</span>
+                            </div>
+                          </Label>
+                        </div>
                       ))}
-                  </ul>
+                  </RadioGroup>
                 </div>
               )}
             </div>
