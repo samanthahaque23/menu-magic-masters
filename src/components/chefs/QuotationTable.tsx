@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { MenuItemsList } from "./quotation/MenuItemsList";
-import { OrderStatusList } from "./quotation/OrderStatusList";
+import { OrderProgress } from "./OrderProgress";
 
 interface QuotationTableProps {
   quotations: Quote[];
@@ -139,7 +139,10 @@ export const QuotationTable = ({
               </TableCell>
 
               <TableCell className="text-[#600000]">
-                <OrderStatusList quotation={quotation} chefId={quotation.chef_id || ''} />
+                <OrderProgress 
+                  quoteStatus={quotation.quote_status} 
+                  orderStatus={quotation.order_status}
+                />
               </TableCell>
 
               <TableCell>
