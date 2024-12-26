@@ -14,6 +14,7 @@ export type Database = {
           chef_id: string | null
           created_at: string
           id: string
+          is_selected: boolean | null
           is_visible_to_customer: boolean | null
           price: number
           quote_id: string | null
@@ -24,6 +25,7 @@ export type Database = {
           chef_id?: string | null
           created_at?: string
           id?: string
+          is_selected?: boolean | null
           is_visible_to_customer?: boolean | null
           price: number
           quote_id?: string | null
@@ -34,6 +36,7 @@ export type Database = {
           chef_id?: string | null
           created_at?: string
           id?: string
+          is_selected?: boolean | null
           is_visible_to_customer?: boolean | null
           price?: number
           quote_id?: string | null
@@ -208,6 +211,7 @@ export type Database = {
           chef_item_quote_id: string | null
           created_at: string
           id: string
+          is_confirmed: boolean | null
           order_status: Database["public"]["Enums"]["order_status"] | null
           price: number
           quote_id: string | null
@@ -218,6 +222,7 @@ export type Database = {
           chef_item_quote_id?: string | null
           created_at?: string
           id?: string
+          is_confirmed?: boolean | null
           order_status?: Database["public"]["Enums"]["order_status"] | null
           price: number
           quote_id?: string | null
@@ -228,6 +233,7 @@ export type Database = {
           chef_item_quote_id?: string | null
           created_at?: string
           id?: string
+          is_confirmed?: boolean | null
           order_status?: Database["public"]["Enums"]["order_status"] | null
           price?: number
           quote_id?: string | null
