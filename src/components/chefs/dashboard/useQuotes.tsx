@@ -47,6 +47,7 @@ export const useQuotes = (session: any) => {
             order_status
           )
         `)
+        .or(`quote_status.eq.pending,item_orders.chef_id.eq.${session.user.id}`)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -59,9 +60,11 @@ export const useQuotes = (session: any) => {
       return quotes?.filter(quote => {
         if (!quote.profiles?.role || quote.profiles.role !== 'customer') return false;
         
+        // Show pending quotes to all chefs
         if (quote.quote_status === 'pending') return true;
-        if (quote.chef_id === session.user.id) return true;
-        if (quote.chef_quotes?.some(q => q.chef_id === session.user.id)) return true;
+        
+        // Show quotes where this chef has item orders
+        if (quote.item_orders?.some(order => order.chef_id === session.user.id)) return true;
         
         return false;
       }) || [];

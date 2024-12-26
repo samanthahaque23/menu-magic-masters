@@ -405,7 +405,6 @@ export type Database = {
       }
       quotes: {
         Row: {
-          chef_id: string | null
           created_at: string
           customer_id: string | null
           id: string
@@ -415,11 +414,9 @@ export type Database = {
           party_date: string | null
           party_location: string | null
           quote_status: Database["public"]["Enums"]["quote_status"] | null
-          total_price: number | null
           veg_guests: number | null
         }
         Insert: {
-          chef_id?: string | null
           created_at?: string
           customer_id?: string | null
           id?: string
@@ -429,11 +426,9 @@ export type Database = {
           party_date?: string | null
           party_location?: string | null
           quote_status?: Database["public"]["Enums"]["quote_status"] | null
-          total_price?: number | null
           veg_guests?: number | null
         }
         Update: {
-          chef_id?: string | null
           created_at?: string
           customer_id?: string | null
           id?: string
@@ -443,17 +438,9 @@ export type Database = {
           party_date?: string | null
           party_location?: string | null
           quote_status?: Database["public"]["Enums"]["quote_status"] | null
-          total_price?: number | null
           veg_guests?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "quotes_chef_id_fkey"
-            columns: ["chef_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "quotes_customer_id_fkey"
             columns: ["customer_id"]
