@@ -1,15 +1,14 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Check } from "lucide-react";
 import { format } from "date-fns";
-import { OrderProgress } from "./OrderProgress";
 import { QuoteStatus, OrderStatus } from "@/integrations/supabase/types/enums";
 import type { Quote } from "@/integrations/supabase/types/quotes";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { MenuItemsList } from "./quotation/MenuItemsList";
+import { OrderStatusList } from "./quotation/OrderStatusList";
 
 interface QuotationTableProps {
   quotations: Quote[];
@@ -81,6 +80,13 @@ export const QuotationTable = ({
     }
   };
 
+  const handlePriceChange = (quoteId: string, itemId: string, price: string) => {
+    setPrices(prev => ({
+      ...prev,
+      [`${quoteId}-${itemId}`]: price
+    }));
+  };
+
   return (
     <div className="rounded-md border border-[#600000]/10">
       <Table>
@@ -125,51 +131,15 @@ export const QuotationTable = ({
               </TableCell>
 
               <TableCell className="text-[#600000]">
-                <Card className="p-2 border border-[#600000]/10">
-                  <ul className="text-sm space-y-1">
-                    {quotation.quote_items?.map((item) => (
-                      <li key={item.id} className="flex justify-between items-center">
-                        <span>
-                          {item.food_items?.name} x{item.quantity}
-                          <span className="text-xs ml-2 opacity-75">
-                            ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
-                          </span>
-                        </span>
-                        {quotation.quote_status === 'pending' && (
-                          <Input
-                            type="number"
-                            placeholder="Price"
-                            className="w-24 ml-2"
-                            value={prices[`${quotation.id}-${item.id}`] || ''}
-                            onChange={(e) => setPrices(prev => ({
-                              ...prev,
-                              [`${quotation.id}-${item.id}`]: e.target.value
-                            }))}
-                          />
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
+                <MenuItemsList 
+                  quotation={quotation}
+                  prices={prices}
+                  onPriceChange={handlePriceChange}
+                />
               </TableCell>
 
               <TableCell className="text-[#600000]">
-                <div className="space-y-2">
-                  {quotation.quote_items?.map((item) => {
-                    const itemOrder = quotation.item_orders?.find(
-                      order => order.quote_item_id === item.id && order.chef_id === quotation.chef_id
-                    );
-                    return itemOrder ? (
-                      <div key={item.id} className="mb-2">
-                        <p className="text-sm font-medium mb-1">{item.food_items?.name}</p>
-                        <OrderProgress 
-                          quoteStatus={quotation.quote_status} 
-                          orderStatus={itemOrder.order_status}
-                        />
-                      </div>
-                    ) : null;
-                  })}
-                </div>
+                <OrderStatusList quotation={quotation} chefId={quotation.chef_id || ''} />
               </TableCell>
 
               <TableCell>

@@ -57,10 +57,13 @@ export const useQuotes = (session: any) => {
       console.log('Fetched quotes:', quotes);
 
       return quotes?.filter(quote => {
-        if (!quote.profiles?.role || quote.profiles.role !== 'customer') return false;
-        
+        // Show quotes that are pending for all chefs
         if (quote.quote_status === 'pending') return true;
-        if (quote.chef_id === session.user.id) return true;
+        
+        // Show quotes where this chef has been selected (has item orders)
+        if (quote.item_orders?.some(order => order.chef_id === session.user.id)) return true;
+        
+        // Show quotes where this chef has submitted quotes
         if (quote.chef_quotes?.some(q => q.chef_id === session.user.id)) return true;
         
         return false;
