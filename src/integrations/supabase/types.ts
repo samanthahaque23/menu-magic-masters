@@ -9,6 +9,61 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      chef_item_quotes: {
+        Row: {
+          chef_id: string | null
+          created_at: string
+          id: string
+          is_visible_to_customer: boolean | null
+          price: number
+          quote_id: string | null
+          quote_item_id: string | null
+          quote_status: Database["public"]["Enums"]["quote_status"] | null
+        }
+        Insert: {
+          chef_id?: string | null
+          created_at?: string
+          id?: string
+          is_visible_to_customer?: boolean | null
+          price: number
+          quote_id?: string | null
+          quote_item_id?: string | null
+          quote_status?: Database["public"]["Enums"]["quote_status"] | null
+        }
+        Update: {
+          chef_id?: string | null
+          created_at?: string
+          id?: string
+          is_visible_to_customer?: boolean | null
+          price?: number
+          quote_id?: string | null
+          quote_item_id?: string | null
+          quote_status?: Database["public"]["Enums"]["quote_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chef_item_quotes_chef_id_fkey"
+            columns: ["chef_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chef_item_quotes_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chef_item_quotes_quote_item_id_fkey"
+            columns: ["quote_item_id"]
+            isOneToOne: false
+            referencedRelation: "quote_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chef_quotes: {
         Row: {
           chef_id: string | null
@@ -146,6 +201,68 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      item_orders: {
+        Row: {
+          chef_id: string | null
+          chef_item_quote_id: string | null
+          created_at: string
+          id: string
+          order_status: Database["public"]["Enums"]["order_status"] | null
+          price: number
+          quote_id: string | null
+          quote_item_id: string | null
+        }
+        Insert: {
+          chef_id?: string | null
+          chef_item_quote_id?: string | null
+          created_at?: string
+          id?: string
+          order_status?: Database["public"]["Enums"]["order_status"] | null
+          price: number
+          quote_id?: string | null
+          quote_item_id?: string | null
+        }
+        Update: {
+          chef_id?: string | null
+          chef_item_quote_id?: string | null
+          created_at?: string
+          id?: string
+          order_status?: Database["public"]["Enums"]["order_status"] | null
+          price?: number
+          quote_id?: string | null
+          quote_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_orders_chef_id_fkey"
+            columns: ["chef_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_orders_chef_item_quote_id_fkey"
+            columns: ["chef_item_quote_id"]
+            isOneToOne: false
+            referencedRelation: "chef_item_quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_orders_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_orders_quote_item_id_fkey"
+            columns: ["quote_item_id"]
+            isOneToOne: false
+            referencedRelation: "quote_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       orders: {
         Row: {
