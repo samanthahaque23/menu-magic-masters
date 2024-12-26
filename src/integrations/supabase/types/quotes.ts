@@ -21,6 +21,13 @@ export interface QuoteItem {
   };
 }
 
+export interface ItemOrder {
+  id: string;
+  chef_id: string | null;
+  quote_item_id: string | null;
+  order_status: OrderStatus | null;
+}
+
 export interface Quote {
   id: string;
   customer_id: string | null;
@@ -41,4 +48,5 @@ export interface Quote {
   };
   quote_items?: QuoteItem[];
   chef_quotes?: ChefQuote[];
+  item_orders?: ItemOrder[];
 }
