@@ -6,35 +6,28 @@ import { OrderProgress } from "../chefs/OrderProgress";
 import { format } from "date-fns";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { ChefItemQuote } from "@/integrations/supabase/types/chef-quotes";
 
 export const CustomerOrders = ({ orders, refetch }) => {
   const { toast } = useToast();
 
-  const handleQuoteSelection = async (
-    quoteId: string, 
-    quoteItemId: string, 
-    chefItemQuoteId: string, 
-    price: number
-  ) => {
+  const handleQuoteSelection = async (quoteId: string, chefQuoteId: string, price: number) => {
     try {
-      // Reset all chef item quotes to pending first
+      // Reset all chef quotes to pending first
       const { error: resetError } = await supabase
-        .from('chef_item_quotes')
+        .from('chef_quotes')
         .update({ quote_status: 'pending' })
-        .eq('quote_item_id', quoteItemId);
+        .eq('quote_id', quoteId);
 
       if (resetError) throw resetError;
 
       // Then approve the selected quote
       const { error: chefQuoteError } = await supabase
-        .from('chef_item_quotes')
+        .from('chef_quotes')
         .update({ quote_status: 'approved' })
-        .eq('id', chefItemQuoteId);
+        .eq('id', chefQuoteId);
 
       if (chefQuoteError) throw chefQuoteError;
 
-      // Update the quote total price
       const { error: quoteError } = await supabase
         .from('quotes')
         .update({ 
@@ -61,7 +54,7 @@ export const CustomerOrders = ({ orders, refetch }) => {
     }
   };
 
-  const handleStatusUpdate = async (id: string, action: 'received' | 'confirm') => {
+  const handleStatusUpdate = async (id: string, action: 'received' | 'confirm', selectedChefQuote?: any) => {
     try {
       const updateData = action === 'received' 
         ? { 
@@ -70,7 +63,8 @@ export const CustomerOrders = ({ orders, refetch }) => {
         : { 
             is_confirmed: true, 
             order_status: 'confirmed' as const,
-            quote_status: 'approved' as const
+            quote_status: 'approved' as const,
+            chef_id: selectedChefQuote?.chef_id
           };
 
       const { error } = await supabase
@@ -79,33 +73,6 @@ export const CustomerOrders = ({ orders, refetch }) => {
         .eq('id', id);
 
       if (error) throw error;
-
-      // If confirming order, create item_orders for each approved chef item quote
-      if (action === 'confirm') {
-        const { data: approvedQuotes, error: quotesError } = await supabase
-          .from('chef_item_quotes')
-          .select('*')
-          .eq('quote_id', id)
-          .eq('quote_status', 'approved');
-
-        if (quotesError) throw quotesError;
-
-        const itemOrders = approvedQuotes.map(quote => ({
-          quote_id: id,
-          quote_item_id: quote.quote_item_id,
-          chef_id: quote.chef_id,
-          chef_item_quote_id: quote.id,
-          price: quote.price
-        }));
-
-        if (itemOrders.length > 0) {
-          const { error: ordersError } = await supabase
-            .from('item_orders')
-            .insert(itemOrders);
-
-          if (ordersError) throw ordersError;
-        }
-      }
 
       toast({
         title: "Success",
@@ -145,63 +112,46 @@ export const CustomerOrders = ({ orders, refetch }) => {
             </div>
             <div>
               <h3 className="font-semibold mb-2">Menu Items</h3>
-              <div className="space-y-4">
-                {order.quote_items?.map((item) => (
-                  <div key={item.id} className="border p-4 rounded-lg">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <p className="font-medium">{item.food_items?.name} x{item.quantity}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {item.food_items?.dietary_preference}, {item.food_items?.course_type}
-                        </p>
-                      </div>
-                    </div>
-                    {!order.is_confirmed && (
-                      <div className="mt-2">
-                        <h4 className="text-sm font-medium mb-2">Chef Quotes</h4>
-                        <RadioGroup
-                          defaultValue={
-                            order.chef_item_quotes?.find(
-                              q => q.quote_item_id === item.id && q.quote_status === 'approved'
-                            )?.id
-                          }
-                          className="space-y-2"
-                        >
-                          {order.chef_item_quotes
-                            ?.filter(quote => 
-                              quote.quote_item_id === item.id && 
-                              quote.is_visible_to_customer
-                            )
-                            .map((chefQuote: ChefItemQuote) => (
-                              <div key={chefQuote.id} className="flex items-center space-x-2">
-                                <RadioGroupItem
-                                  value={chefQuote.id}
-                                  id={chefQuote.id}
-                                  disabled={order.is_confirmed}
-                                  onClick={() => 
-                                    !order.is_confirmed && 
-                                    handleQuoteSelection(
-                                      order.id,
-                                      item.id,
-                                      chefQuote.id,
-                                      chefQuote.price
-                                    )
-                                  }
-                                />
-                                <Label htmlFor={chefQuote.id} className="flex-1">
-                                  <div className="flex items-center justify-between">
-                                    <span>{chefQuote.profiles?.full_name}</span>
-                                    <span className="font-semibold">${chefQuote.price}</span>
-                                  </div>
-                                </Label>
-                              </div>
-                            ))}
-                        </RadioGroup>
-                      </div>
-                    )}
-                  </div>
+              <ul className="space-y-1">
+                {order.quote_items?.map((item, index) => (
+                  <li key={index}>
+                    {item.food_items?.name} x{item.quantity}
+                    <span className="text-xs ml-2 text-muted-foreground">
+                      ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
+                    </span>
+                  </li>
                 ))}
-              </div>
+              </ul>
+
+              {order.chef_quotes && order.chef_quotes.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="font-semibold mb-2">Chef Quotes</h3>
+                  <RadioGroup
+                    defaultValue={order.chef_quotes.find(q => q.quote_status === 'approved')?.id}
+                    className="space-y-2"
+                  >
+                    {order.chef_quotes
+                      .filter(quote => quote.is_visible_to_customer)
+                      .map((chefQuote) => (
+                        <div key={chefQuote.id} className="flex items-center space-x-2">
+                          <RadioGroupItem
+                            value={chefQuote.id}
+                            id={chefQuote.id}
+                            disabled={order.is_confirmed}
+                            onClick={() => !order.is_confirmed && 
+                              handleQuoteSelection(order.id, chefQuote.id, chefQuote.price)}
+                          />
+                          <Label htmlFor={chefQuote.id} className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <span>{chefQuote.profiles?.full_name}</span>
+                              <span className="font-semibold">${chefQuote.price}</span>
+                            </div>
+                          </Label>
+                        </div>
+                      ))}
+                  </RadioGroup>
+                </div>
+              )}
             </div>
             <div className="space-y-4">
               <h3 className="font-semibold mb-2">Order Status</h3>
@@ -216,16 +166,24 @@ export const CustomerOrders = ({ orders, refetch }) => {
                   Mark as Received
                 </Button>
               )}
-              {!order.is_confirmed && order.quote_items?.every(item => 
-                order.chef_item_quotes?.some(quote => 
-                  quote.quote_item_id === item.id && 
-                  quote.quote_status === 'approved'
-                )
-              ) && (
+              {!order.is_confirmed && order.chef_quotes?.some(quote => quote.quote_status === 'approved') && (
                 <Button
                   variant="default"
                   className="w-full"
-                  onClick={() => handleStatusUpdate(order.id, 'confirm')}
+                  onClick={() => {
+                    const approvedChefQuote = order.chef_quotes?.find(
+                      quote => quote.quote_status === 'approved'
+                    );
+                    if (!approvedChefQuote) {
+                      toast({
+                        variant: "destructive",
+                        title: "Error",
+                        description: "Please select a chef quote first",
+                      });
+                      return;
+                    }
+                    handleStatusUpdate(order.id, 'confirm', approvedChefQuote);
+                  }}
                 >
                   Confirm Order (${order.total_price})
                 </Button>

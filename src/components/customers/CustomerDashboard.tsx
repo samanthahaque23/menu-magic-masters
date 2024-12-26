@@ -44,7 +44,6 @@ export const CustomerDashboard = () => {
             email
           ),
           quote_items (
-            id,
             quantity,
             food_items (
               name,
@@ -52,10 +51,9 @@ export const CustomerDashboard = () => {
               course_type
             )
           ),
-          chef_item_quotes (
+          chef_quotes (
             id,
             chef_id,
-            quote_item_id,
             price,
             quote_status,
             is_visible_to_customer,

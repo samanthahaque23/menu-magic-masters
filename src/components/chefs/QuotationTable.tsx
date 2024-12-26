@@ -12,7 +12,7 @@ import { useState } from "react";
 interface QuotationTableProps {
   quotations: Quote[];
   onStatusUpdate: (id: string, quoteStatus: QuoteStatus, orderStatus?: OrderStatus) => void;
-  onQuoteSubmit: (quoteId: string, itemPrices: Record<string, number>) => void;
+  onQuoteSubmit: (quoteId: string, price: number) => void;
 }
 
 export const QuotationTable = ({ 
@@ -20,42 +20,17 @@ export const QuotationTable = ({
   onStatusUpdate,
   onQuoteSubmit
 }: QuotationTableProps) => {
-  const [itemPrices, setItemPrices] = useState<Record<string, Record<string, string>>>({});
-
-  const handlePriceChange = (quotationId: string, itemId: string, value: string) => {
-    setItemPrices(prev => ({
-      ...prev,
-      [quotationId]: {
-        ...(prev[quotationId] || {}),
-        [itemId]: value
-      }
-    }));
-  };
+  const [prices, setPrices] = useState<Record<string, string>>({});
 
   const handleSubmitQuote = (quotation: Quote) => {
-    if (!quotation.quote_items) return;
-
-    const prices = itemPrices[quotation.id] || {};
-    const validPrices: Record<string, number> = {};
-    let isValid = true;
-
-    quotation.quote_items.forEach(item => {
-      if (!item.id) return;
-      const price = parseFloat(prices[item.id] || "0");
-      if (!price || price <= 0) {
-        isValid = false;
-        return;
-      }
-      validPrices[item.id] = price;
-    });
-
-    if (!isValid) return;
+    const price = parseFloat(prices[quotation.id] || "0");
+    if (!price || price <= 0) return;
     
-    onQuoteSubmit(quotation.id, validPrices);
+    onQuoteSubmit(quotation.id, price);
     
-    setItemPrices(prev => ({
+    setPrices(prev => ({
       ...prev,
-      [quotation.id]: {}
+      [quotation.id]: ''
     }));
   };
 
@@ -98,31 +73,32 @@ export const QuotationTable = ({
                   <p>Location: {quotation.party_location}</p>
                   <p>Veg Guests: {quotation.veg_guests}</p>
                   <p>Non-veg Guests: {quotation.non_veg_guests}</p>
+                  {quotation.chef_quotes && quotation.chef_quotes.length > 0 && (
+                    <div className="mt-2">
+                      <p className="font-semibold">Submitted Quotes:</p>
+                      <ul className="text-sm space-y-1">
+                        {quotation.chef_quotes.map((chefQuote) => (
+                          <li key={chefQuote.id}>
+                            Price: ${chefQuote.price}
+                            {chefQuote.quote_status === 'approved' && (
+                              <span className="ml-2 text-green-500">(Selected)</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </TableCell>
               <TableCell className="text-[#600000]">
-                <Card className="p-4 border border-[#600000]/10">
-                  <ul className="space-y-4">
-                    {quotation.quote_items?.map((item) => (
-                      <li key={item.id} className="flex flex-col space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium">{item.food_items?.name}</span>
-                          <span className="text-sm">
-                            x{item.quantity}
-                          </span>
-                        </div>
-                        <div className="text-xs opacity-75">
-                          {item.food_items?.dietary_preference}, {item.food_items?.course_type}
-                        </div>
-                        {quotation.quote_status === 'pending' && !quotation.chef_item_quotes?.some(q => q.chef_id === quotation.chef_id) && (
-                          <Input
-                            type="number"
-                            placeholder="Enter price per item"
-                            value={itemPrices[quotation.id]?.[item.id || ''] || ''}
-                            onChange={(e) => handlePriceChange(quotation.id, item.id || '', e.target.value)}
-                            className="w-full mt-1"
-                          />
-                        )}
+                <Card className="p-2 border border-[#600000]/10">
+                  <ul className="text-sm space-y-1">
+                    {quotation.quote_items?.map((item, index) => (
+                      <li key={index}>
+                        {item.food_items?.name} x{item.quantity}
+                        <span className="text-xs ml-2 opacity-75">
+                          ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -135,14 +111,31 @@ export const QuotationTable = ({
                 />
               </TableCell>
               <TableCell>
-                {quotation.quote_status === 'pending' && !quotation.chef_item_quotes?.some(q => q.chef_id === quotation.chef_id) && (
-                  <Button
-                    onClick={() => handleSubmitQuote(quotation)}
-                    className="bg-[#600000] hover:bg-[#600000]/90 text-white"
-                  >
-                    <Check className="h-4 w-4 mr-1" />
-                    Submit Quote
-                  </Button>
+                {quotation.quote_status === 'pending' && !quotation.chef_quotes?.some(q => q.chef_id === quotation.chef_id) && (
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        type="number"
+                        placeholder="Enter price"
+                        value={prices[quotation.id] || ''}
+                        onChange={(e) => setPrices(prev => ({
+                          ...prev,
+                          [quotation.id]: e.target.value
+                        }))}
+                        className="w-32 border-[#600000]/20 text-[#600000]"
+                      />
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleSubmitQuote(quotation)}
+                        className="bg-[#600000] hover:bg-[#600000]/90 text-white"
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Submit Quote
+                      </Button>
+                    </div>
+                  </div>
                 )}
                 {quotation.quote_status === 'approved' && quotation.order_status === 'confirmed' && (
                   <Button
