@@ -1,8 +1,10 @@
 import { DietaryPreference, CourseType, QuoteStatus, OrderStatus } from './enums';
 
-export interface ChefQuote {
+export interface ChefItemQuote {
   id: string;
   chef_id: string | null;
+  quote_id: string | null;
+  quote_item_id: string | null;
   price: number;
   quote_status: QuoteStatus | null;
   is_visible_to_customer: boolean | null;
@@ -15,6 +17,7 @@ export interface QuoteItem {
   quantity: number | null;
   created_at: string;
   food_items?: {
+    id: string;
     name: string;
     dietary_preference: DietaryPreference;
     course_type: CourseType;
@@ -40,5 +43,5 @@ export interface Quote {
     phone?: string | null;
   };
   quote_items?: QuoteItem[];
-  chef_quotes?: ChefQuote[];
+  chef_item_quotes?: ChefItemQuote[];
 }
