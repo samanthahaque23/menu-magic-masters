@@ -11,6 +11,7 @@ export const useQuotes = (session: any) => {
     queryKey: ['chef-quotes', session?.user?.id],
     enabled: !!session?.user?.id,
     queryFn: async () => {
+      console.log('Fetching quotes for chef:', session?.user?.id);
       const { data: quotes, error } = await supabase
         .from('quotes')
         .select(`
@@ -46,25 +47,26 @@ export const useQuotes = (session: any) => {
         throw error;
       }
 
-      // Filter quotes to show:
-      // 1. All pending quotes that don't have a chef assigned
-      // 2. Quotes specifically assigned to this chef
-      // 3. Quotes where this chef has submitted a quote
+      console.log('Fetched quotes:', quotes);
+
+      // Show quotes that are:
+      // 1. Pending (no chef assigned)
+      // 2. Assigned to this chef
+      // 3. Where this chef has submitted a quote
       return quotes?.filter(quote => {
-        // Show all pending quotes that don't have a chef assigned
-        if (quote.quote_status === 'pending' && !quote.chef_id) return true;
+        if (!quote.profiles?.role || quote.profiles.role !== 'customer') return false;
         
-        // Show quotes assigned to this specific chef
+        // Show all pending quotes
+        if (quote.quote_status === 'pending') return true;
+        
+        // Show quotes assigned to this chef
         if (quote.chef_id === session.user.id) return true;
         
-        // Show quotes where this chef has already submitted a quote
+        // Show quotes where this chef has submitted a quote
         if (quote.chef_quotes?.some(q => q.chef_id === session.user.id)) return true;
         
         return false;
-      }).filter(quote => 
-        // Ensure we only show quotes from customers
-        quote.profiles?.role === 'customer'
-      ) || [];
+      }) || [];
     }
   });
 
