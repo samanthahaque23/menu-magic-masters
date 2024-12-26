@@ -73,7 +73,9 @@ export const useQuotes = (session: any) => {
 
   const handleQuoteSubmission = async (quoteId: string, itemPrices: Record<string, number>) => {
     try {
-      // Create chef_item_quotes for each item
+      console.log('Starting quote submission process...', { quoteId, itemPrices });
+
+      // First, create chef_item_quotes
       const chefItemQuotes = Object.entries(itemPrices).map(([itemId, price]) => ({
         quote_id: quoteId,
         quote_item_id: itemId,
@@ -82,13 +84,20 @@ export const useQuotes = (session: any) => {
         is_visible_to_customer: true
       }));
 
+      console.log('Creating chef item quotes:', chefItemQuotes);
+
       // Insert chef item quotes
       const { data: insertedQuotes, error: quotesError } = await supabase
         .from('chef_item_quotes')
         .insert(chefItemQuotes)
         .select();
 
-      if (quotesError) throw quotesError;
+      if (quotesError) {
+        console.error('Error creating chef item quotes:', quotesError);
+        throw quotesError;
+      }
+
+      console.log('Successfully created chef item quotes:', insertedQuotes);
 
       // Create item orders for each quote item
       const itemOrders = insertedQuotes.map(quote => ({
@@ -101,12 +110,35 @@ export const useQuotes = (session: any) => {
         is_confirmed: true
       }));
 
-      // Insert item orders
-      const { error: ordersError } = await supabase
-        .from('item_orders')
-        .insert(itemOrders);
+      console.log('Creating item orders:', itemOrders);
 
-      if (ordersError) throw ordersError;
+      // Insert item orders
+      const { data: insertedOrders, error: ordersError } = await supabase
+        .from('item_orders')
+        .insert(itemOrders)
+        .select();
+
+      if (ordersError) {
+        console.error('Error creating item orders:', ordersError);
+        throw ordersError;
+      }
+
+      console.log('Successfully created item orders:', insertedOrders);
+
+      // Update quote status to reflect the submission
+      const { error: updateError } = await supabase
+        .from('quotes')
+        .update({ 
+          quote_status: 'approved' as QuoteStatus,
+          order_status: 'confirmed' as OrderStatus,
+          is_confirmed: true 
+        })
+        .eq('id', quoteId);
+
+      if (updateError) {
+        console.error('Error updating quote status:', updateError);
+        throw updateError;
+      }
 
       toast({
         title: "Success",
@@ -115,7 +147,7 @@ export const useQuotes = (session: any) => {
 
       queryClient.invalidateQueries({ queryKey: ['chef-quotes'] });
     } catch (error: any) {
-      console.error('Error submitting quote:', error);
+      console.error('Error in quote submission process:', error);
       toast({
         variant: "destructive",
         title: "Error",
