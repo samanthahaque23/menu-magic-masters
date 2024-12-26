@@ -23,6 +23,7 @@ export const useQuotes = (session: any) => {
             role
           ),
           quote_items (
+            id,
             quantity,
             food_items (
               name,
@@ -49,20 +50,11 @@ export const useQuotes = (session: any) => {
 
       console.log('Fetched quotes:', quotes);
 
-      // Show quotes that are:
-      // 1. Pending (no chef assigned)
-      // 2. Assigned to this chef
-      // 3. Where this chef has submitted a quote
       return quotes?.filter(quote => {
         if (!quote.profiles?.role || quote.profiles.role !== 'customer') return false;
         
-        // Show all pending quotes
         if (quote.quote_status === 'pending') return true;
-        
-        // Show quotes assigned to this chef
         if (quote.chef_id === session.user.id) return true;
-        
-        // Show quotes where this chef has submitted a quote
         if (quote.chef_quotes?.some(q => q.chef_id === session.user.id)) return true;
         
         return false;
@@ -72,7 +64,6 @@ export const useQuotes = (session: any) => {
 
   const handleQuoteSubmission = async (quoteId: string, price: number) => {
     try {
-      // First check if this chef has already submitted a quote
       const { data: existingQuotes, error: checkError } = await supabase
         .from('chef_quotes')
         .select('id')

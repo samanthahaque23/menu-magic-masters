@@ -93,12 +93,26 @@ export const QuotationTable = ({
               <TableCell className="text-[#600000]">
                 <Card className="p-2 border border-[#600000]/10">
                   <ul className="text-sm space-y-1">
-                    {quotation.quote_items?.map((item, index) => (
-                      <li key={index}>
-                        {item.food_items?.name} x{item.quantity}
-                        <span className="text-xs ml-2 opacity-75">
-                          ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
+                    {quotation.quote_items?.map((item) => (
+                      <li key={item.id} className="flex justify-between items-center">
+                        <span>
+                          {item.food_items?.name} x{item.quantity}
+                          <span className="text-xs ml-2 opacity-75">
+                            ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
+                          </span>
                         </span>
+                        {quotation.quote_status === 'pending' && (
+                          <Input
+                            type="number"
+                            placeholder="Price"
+                            className="w-24 ml-2"
+                            value={prices[`${quotation.id}-${item.id}`] || ''}
+                            onChange={(e) => setPrices(prev => ({
+                              ...prev,
+                              [`${quotation.id}-${item.id}`]: e.target.value
+                            }))}
+                          />
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -113,28 +127,14 @@ export const QuotationTable = ({
               <TableCell>
                 {quotation.quote_status === 'pending' && !quotation.chef_quotes?.some(q => q.chef_id === quotation.chef_id) && (
                   <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Input
-                        type="number"
-                        placeholder="Enter price"
-                        value={prices[quotation.id] || ''}
-                        onChange={(e) => setPrices(prev => ({
-                          ...prev,
-                          [quotation.id]: e.target.value
-                        }))}
-                        className="w-32 border-[#600000]/20 text-[#600000]"
-                      />
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleSubmitQuote(quotation)}
-                        className="bg-[#600000] hover:bg-[#600000]/90 text-white"
-                      >
-                        <Check className="h-4 w-4 mr-1" />
-                        Submit Quote
-                      </Button>
-                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleSubmitQuote(quotation)}
+                      className="bg-[#600000] hover:bg-[#600000]/90 text-white"
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      Submit Quote
+                    </Button>
                   </div>
                 )}
                 {quotation.quote_status === 'approved' && quotation.order_status === 'confirmed' && (
