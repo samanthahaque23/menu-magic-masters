@@ -11,6 +11,7 @@ export const useQuotes = (session: any) => {
     queryKey: ['chef-quotes', session?.user?.id],
     enabled: !!session?.user?.id,
     queryFn: async () => {
+      console.log("Fetching quotes for chef:", session?.user?.id);
       const { data: quotes, error } = await supabase
         .from('quotes')
         .select(`
@@ -25,19 +26,17 @@ export const useQuotes = (session: any) => {
             id,
             quantity,
             food_items (
+              id,
               name,
               dietary_preference,
               course_type
             )
           ),
-          chef_quotes (
+          chef_item_quotes (
             id,
             chef_id,
             price,
-            quote_status,
-            profiles!chef_quotes_chef_id_fkey (
-              full_name
-            )
+            quote_item_id
           )
         `)
         .order('created_at', { ascending: false });
@@ -47,10 +46,11 @@ export const useQuotes = (session: any) => {
         throw error;
       }
 
+      console.log("Fetched quotes:", quotes);
+
       return quotes?.filter(quote => {
         if (quote.quote_status === 'pending' && !quote.chef_id) return true;
         if (quote.chef_id === session.user.id) return true;
-        if (quote.chef_quotes?.some(q => q.chef_id === session.user.id)) return true;
         return false;
       }).filter(quote => 
         quote.profiles?.role === 'customer'
@@ -60,6 +60,8 @@ export const useQuotes = (session: any) => {
 
   const handleQuoteSubmission = async (quoteId: string, itemPrices: Record<string, number>) => {
     try {
+      console.log("Submitting quote with prices:", itemPrices);
+      
       // Create chef item quotes for each item
       const chefItemQuotes = Object.entries(itemPrices).map(([itemId, price]) => ({
         quote_id: quoteId,
@@ -82,6 +84,7 @@ export const useQuotes = (session: any) => {
 
       queryClient.invalidateQueries({ queryKey: ['chef-quotes'] });
     } catch (error: any) {
+      console.error("Error submitting quote:", error);
       toast({
         variant: "destructive",
         title: "Error",

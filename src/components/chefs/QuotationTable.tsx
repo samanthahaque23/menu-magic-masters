@@ -134,7 +134,7 @@ export const QuotationTable = ({
                 />
               </TableCell>
               <TableCell>
-                {quotation.quote_status === 'pending' && !quotation.chef_quotes?.some(q => q.chef_id === quotation.chef_id) && (
+                {quotation.quote_status === 'pending' && !quotation.chef_item_quotes?.some(q => q.chef_id === quotation.chef_id) && (
                   <Button
                     onClick={() => handleSubmitQuote(quotation)}
                     className="bg-[#600000] hover:bg-[#600000]/90 text-white"
