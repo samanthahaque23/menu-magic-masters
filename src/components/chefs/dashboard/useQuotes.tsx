@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { QuoteStatus, OrderStatus } from "@/integrations/supabase/types/enums";
@@ -47,7 +47,7 @@ export const useQuotes = (session: any) => {
             order_status
           )
         `)
-        .or(`quote_status.eq.pending,and(item_orders.chef_id.eq.${session.user.id})`)
+        .or('quote_status.eq.pending,item_orders.chef_id.eq.' + session.user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
