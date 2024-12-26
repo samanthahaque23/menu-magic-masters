@@ -62,33 +62,20 @@ export const useQuotes = (session: any) => {
     }
   });
 
-  const handleQuoteSubmission = async (quoteId: string, price: number) => {
+  const handleQuoteSubmission = async (quoteId: string, itemPrices: Record<string, number>) => {
     try {
-      const { data: existingQuotes, error: checkError } = await supabase
-        .from('chef_quotes')
-        .select('id')
-        .eq('quote_id', quoteId)
-        .eq('chef_id', session.user.id);
-
-      if (checkError) throw checkError;
-
-      if (existingQuotes && existingQuotes.length > 0) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "You have already submitted a quote for this request",
-        });
-        return;
-      }
+      // Create chef_item_quotes for each item
+      const chefItemQuotes = Object.entries(itemPrices).map(([itemId, price]) => ({
+        quote_id: quoteId,
+        quote_item_id: itemId,
+        chef_id: session.user.id,
+        price: price,
+        is_visible_to_customer: true
+      }));
 
       const { error } = await supabase
-        .from('chef_quotes')
-        .insert({
-          quote_id: quoteId,
-          chef_id: session.user.id,
-          price: price,
-          is_visible_to_customer: true
-        });
+        .from('chef_item_quotes')
+        .insert(chefItemQuotes);
 
       if (error) throw error;
 

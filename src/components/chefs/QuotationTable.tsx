@@ -8,11 +8,13 @@ import { OrderProgress } from "./OrderProgress";
 import { QuoteStatus, OrderStatus } from "@/integrations/supabase/types/enums";
 import type { Quote } from "@/integrations/supabase/types/quotes";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface QuotationTableProps {
   quotations: Quote[];
   onStatusUpdate: (id: string, quoteStatus: QuoteStatus, orderStatus?: OrderStatus) => void;
-  onQuoteSubmit: (quoteId: string, price: number) => void;
+  onQuoteSubmit: (quoteId: string, itemPrices: Record<string, number>) => void;
 }
 
 export const QuotationTable = ({ 
@@ -21,17 +23,39 @@ export const QuotationTable = ({
   onQuoteSubmit
 }: QuotationTableProps) => {
   const [prices, setPrices] = useState<Record<string, string>>({});
+  const { toast } = useToast();
 
-  const handleSubmitQuote = (quotation: Quote) => {
-    const price = parseFloat(prices[quotation.id] || "0");
-    if (!price || price <= 0) return;
+  const handleSubmitQuote = async (quotation: Quote) => {
+    // Validate that all items have prices
+    const itemPrices: Record<string, number> = {};
+    let isValid = true;
+
+    quotation.quote_items?.forEach(item => {
+      const price = parseFloat(prices[`${quotation.id}-${item.id}`] || "0");
+      if (!price || price <= 0) {
+        isValid = false;
+        return;
+      }
+      itemPrices[item.id] = price;
+    });
+
+    if (!isValid) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter valid prices for all items"
+      });
+      return;
+    }
     
-    onQuoteSubmit(quotation.id, price);
+    onQuoteSubmit(quotation.id, itemPrices);
     
-    setPrices(prev => ({
-      ...prev,
-      [quotation.id]: ''
-    }));
+    // Clear prices for this quote
+    const newPrices = { ...prices };
+    quotation.quote_items?.forEach(item => {
+      delete newPrices[`${quotation.id}-${item.id}`];
+    });
+    setPrices(newPrices);
   };
 
   return (
@@ -67,29 +91,16 @@ export const QuotationTable = ({
                   )}
                 </div>
               </TableCell>
+              
               <TableCell className="text-[#600000]">
                 <div>
                   <p>Date: {quotation.party_date ? format(new Date(quotation.party_date), 'PPP') : 'N/A'}</p>
                   <p>Location: {quotation.party_location}</p>
                   <p>Veg Guests: {quotation.veg_guests}</p>
                   <p>Non-veg Guests: {quotation.non_veg_guests}</p>
-                  {quotation.chef_quotes && quotation.chef_quotes.length > 0 && (
-                    <div className="mt-2">
-                      <p className="font-semibold">Submitted Quotes:</p>
-                      <ul className="text-sm space-y-1">
-                        {quotation.chef_quotes.map((chefQuote) => (
-                          <li key={chefQuote.id}>
-                            Price: ${chefQuote.price}
-                            {chefQuote.quote_status === 'approved' && (
-                              <span className="ml-2 text-green-500">(Selected)</span>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
                 </div>
               </TableCell>
+
               <TableCell className="text-[#600000]">
                 <Card className="p-2 border border-[#600000]/10">
                   <ul className="text-sm space-y-1">
@@ -118,12 +129,14 @@ export const QuotationTable = ({
                   </ul>
                 </Card>
               </TableCell>
+
               <TableCell className="text-[#600000]">
                 <OrderProgress 
                   quoteStatus={quotation.quote_status} 
                   orderStatus={quotation.order_status}
                 />
               </TableCell>
+
               <TableCell>
                 {quotation.quote_status === 'pending' && !quotation.chef_quotes?.some(q => q.chef_id === quotation.chef_id) && (
                   <div className="space-y-2">
