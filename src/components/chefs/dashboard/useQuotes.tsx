@@ -39,6 +39,12 @@ export const useQuotes = (session: any) => {
             profiles!chef_quotes_chef_id_fkey (
               full_name
             )
+          ),
+          item_orders (
+            id,
+            chef_id,
+            quote_item_id,
+            order_status
           )
         `)
         .order('created_at', { ascending: false });

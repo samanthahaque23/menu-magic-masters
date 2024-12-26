@@ -58,6 +58,29 @@ export const QuotationTable = ({
     setPrices(newPrices);
   };
 
+  const handleItemStatusUpdate = async (quoteId: string, itemId: string, newStatus: OrderStatus) => {
+    try {
+      const { error } = await supabase
+        .from('item_orders')
+        .update({ order_status: newStatus })
+        .eq('quote_id', quoteId)
+        .eq('quote_item_id', itemId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Item status updated successfully",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
+  };
+
   return (
     <div className="rounded-md border border-[#600000]/10">
       <Table>
@@ -131,10 +154,22 @@ export const QuotationTable = ({
               </TableCell>
 
               <TableCell className="text-[#600000]">
-                <OrderProgress 
-                  quoteStatus={quotation.quote_status} 
-                  orderStatus={quotation.order_status}
-                />
+                <div className="space-y-2">
+                  {quotation.quote_items?.map((item) => {
+                    const itemOrder = quotation.item_orders?.find(
+                      order => order.quote_item_id === item.id && order.chef_id === quotation.chef_id
+                    );
+                    return itemOrder ? (
+                      <div key={item.id} className="mb-2">
+                        <p className="text-sm font-medium mb-1">{item.food_items?.name}</p>
+                        <OrderProgress 
+                          quoteStatus={quotation.quote_status} 
+                          orderStatus={itemOrder.order_status}
+                        />
+                      </div>
+                    ) : null;
+                  })}
+                </div>
               </TableCell>
 
               <TableCell>
@@ -150,24 +185,36 @@ export const QuotationTable = ({
                     </Button>
                   </div>
                 )}
-                {quotation.quote_status === 'approved' && quotation.order_status === 'confirmed' && (
-                  <Button
-                    size="sm"
-                    onClick={() => onStatusUpdate(quotation.id, 'approved', 'processing')}
-                    className="bg-[#600000] hover:bg-[#600000]/90 text-white"
-                  >
-                    Start Processing
-                  </Button>
-                )}
-                {quotation.quote_status === 'approved' && quotation.order_status === 'processing' && (
-                  <Button
-                    size="sm"
-                    onClick={() => onStatusUpdate(quotation.id, 'approved', 'ready_to_deliver')}
-                    className="bg-[#600000] hover:bg-[#600000]/90 text-white"
-                  >
-                    Mark Ready
-                  </Button>
-                )}
+                {quotation.quote_status === 'approved' && quotation.quote_items?.map((item) => {
+                  const itemOrder = quotation.item_orders?.find(
+                    order => order.quote_item_id === item.id && order.chef_id === quotation.chef_id
+                  );
+                  if (!itemOrder) return null;
+
+                  return (
+                    <div key={item.id} className="mb-2">
+                      <p className="text-sm font-medium mb-1">{item.food_items?.name}</p>
+                      {itemOrder.order_status === 'confirmed' && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleItemStatusUpdate(quotation.id, item.id, 'processing')}
+                          className="bg-[#600000] hover:bg-[#600000]/90 text-white w-full"
+                        >
+                          Start Processing
+                        </Button>
+                      )}
+                      {itemOrder.order_status === 'processing' && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleItemStatusUpdate(quotation.id, item.id, 'ready_to_deliver')}
+                          className="bg-[#600000] hover:bg-[#600000]/90 text-white w-full"
+                        >
+                          Mark Ready
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
               </TableCell>
             </TableRow>
           ))}
