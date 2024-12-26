@@ -33,12 +33,14 @@ export const QuotationTable = ({
   };
 
   const handleSubmitQuote = (quotation: Quote) => {
+    if (!quotation.quote_items) return;
+
     const prices = itemPrices[quotation.id] || {};
     const validPrices: Record<string, number> = {};
     let isValid = true;
 
-    // Validate all prices
-    quotation.quote_items?.forEach(item => {
+    quotation.quote_items.forEach(item => {
+      if (!item.id) return;
       const price = parseFloat(prices[item.id] || "0");
       if (!price || price <= 0) {
         isValid = false;
@@ -51,7 +53,6 @@ export const QuotationTable = ({
     
     onQuoteSubmit(quotation.id, validPrices);
     
-    // Clear prices after submission
     setItemPrices(prev => ({
       ...prev,
       [quotation.id]: {}
@@ -113,12 +114,12 @@ export const QuotationTable = ({
                         <div className="text-xs opacity-75">
                           {item.food_items?.dietary_preference}, {item.food_items?.course_type}
                         </div>
-                        {quotation.quote_status === 'pending' && (
+                        {quotation.quote_status === 'pending' && !quotation.chef_item_quotes?.some(q => q.chef_id === quotation.chef_id) && (
                           <Input
                             type="number"
                             placeholder="Enter price per item"
-                            value={itemPrices[quotation.id]?.[item.id] || ''}
-                            onChange={(e) => handlePriceChange(quotation.id, item.id, e.target.value)}
+                            value={itemPrices[quotation.id]?.[item.id || ''] || ''}
+                            onChange={(e) => handlePriceChange(quotation.id, item.id || '', e.target.value)}
                             className="w-full mt-1"
                           />
                         )}

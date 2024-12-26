@@ -62,7 +62,6 @@ export const useQuotes = (session: any) => {
     try {
       console.log("Submitting quote with prices:", itemPrices);
       
-      // Create chef item quotes for each item
       const chefItemQuotes = Object.entries(itemPrices).map(([itemId, price]) => ({
         quote_id: quoteId,
         quote_item_id: itemId,
