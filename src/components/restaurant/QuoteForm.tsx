@@ -53,7 +53,7 @@ export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
         };
       });
 
-      // Create the quote with customer_id and status
+      // Create the quote with customer_id
       const { data: quote, error: quoteError } = await supabase
         .from('quotes')
         .insert({
@@ -62,7 +62,6 @@ export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
           party_location: data.partyLocation,
           veg_guests: data.vegGuests,
           non_veg_guests: data.nonVegGuests,
-          quote_status: 'pending'
         })
         .select()
         .single();
@@ -89,11 +88,10 @@ export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
 
       onSuccess();
     } catch (error: any) {
-      console.error('Quote submission error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to submit quote",
+        description: error.message,
       });
     }
   };
