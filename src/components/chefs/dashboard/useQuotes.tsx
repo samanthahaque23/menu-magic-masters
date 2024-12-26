@@ -22,6 +22,7 @@ export const useQuotes = (session: any) => {
             role
           ),
           quote_items (
+            id,
             quantity,
             food_items (
               name,
@@ -46,58 +47,33 @@ export const useQuotes = (session: any) => {
         throw error;
       }
 
-      // Filter quotes to show:
-      // 1. All pending quotes that don't have a chef assigned
-      // 2. Quotes specifically assigned to this chef
-      // 3. Quotes where this chef has submitted a quote
       return quotes?.filter(quote => {
-        // Show all pending quotes that don't have a chef assigned
         if (quote.quote_status === 'pending' && !quote.chef_id) return true;
-        
-        // Show quotes assigned to this specific chef
         if (quote.chef_id === session.user.id) return true;
-        
-        // Show quotes where this chef has already submitted a quote
         if (quote.chef_quotes?.some(q => q.chef_id === session.user.id)) return true;
-        
         return false;
       }).filter(quote => 
-        // Ensure we only show quotes from customers
         quote.profiles?.role === 'customer'
       ) || [];
     }
   });
 
-  const handleQuoteSubmission = async (quoteId: string, price: number) => {
+  const handleQuoteSubmission = async (quoteId: string, itemPrices: Record<string, number>) => {
     try {
-      // First check if this chef has already submitted a quote
-      const { data: existingQuotes, error: checkError } = await supabase
-        .from('chef_quotes')
-        .select('id')
-        .eq('quote_id', quoteId)
-        .eq('chef_id', session.user.id);
+      // Create chef item quotes for each item
+      const chefItemQuotes = Object.entries(itemPrices).map(([itemId, price]) => ({
+        quote_id: quoteId,
+        quote_item_id: itemId,
+        chef_id: session.user.id,
+        price: price,
+        is_visible_to_customer: true
+      }));
 
-      if (checkError) throw checkError;
+      const { error: itemQuotesError } = await supabase
+        .from('chef_item_quotes')
+        .insert(chefItemQuotes);
 
-      if (existingQuotes && existingQuotes.length > 0) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "You have already submitted a quote for this request",
-        });
-        return;
-      }
-
-      const { error } = await supabase
-        .from('chef_quotes')
-        .insert({
-          quote_id: quoteId,
-          chef_id: session.user.id,
-          price: price,
-          is_visible_to_customer: true
-        });
-
-      if (error) throw error;
+      if (itemQuotesError) throw itemQuotesError;
 
       toast({
         title: "Success",
