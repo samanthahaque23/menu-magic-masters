@@ -82,11 +82,31 @@ export const useQuotes = (session: any) => {
         is_visible_to_customer: true
       }));
 
-      const { error } = await supabase
+      // Insert chef item quotes
+      const { data: insertedQuotes, error: quotesError } = await supabase
         .from('chef_item_quotes')
-        .insert(chefItemQuotes);
+        .insert(chefItemQuotes)
+        .select();
 
-      if (error) throw error;
+      if (quotesError) throw quotesError;
+
+      // Create item orders for each quote item
+      const itemOrders = insertedQuotes.map(quote => ({
+        quote_id: quote.quote_id,
+        quote_item_id: quote.quote_item_id,
+        chef_id: session.user.id,
+        chef_item_quote_id: quote.id,
+        price: quote.price,
+        order_status: 'confirmed' as OrderStatus,
+        is_confirmed: true
+      }));
+
+      // Insert item orders
+      const { error: ordersError } = await supabase
+        .from('item_orders')
+        .insert(itemOrders);
+
+      if (ordersError) throw ordersError;
 
       toast({
         title: "Success",
@@ -95,6 +115,7 @@ export const useQuotes = (session: any) => {
 
       queryClient.invalidateQueries({ queryKey: ['chef-quotes'] });
     } catch (error: any) {
+      console.error('Error submitting quote:', error);
       toast({
         variant: "destructive",
         title: "Error",
