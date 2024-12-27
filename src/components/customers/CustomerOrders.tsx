@@ -6,6 +6,7 @@ import { OrderProgress } from "../chefs/OrderProgress";
 import { format } from "date-fns";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { OrderStatus } from "@/integrations/supabase/types/enums";
 
 export const CustomerOrders = ({ orders, refetch }) => {
   const { toast } = useToast();
@@ -54,7 +55,7 @@ export const CustomerOrders = ({ orders, refetch }) => {
       if (fetchError) throw fetchError;
 
       // Determine the overall order status based on item_orders
-      let orderStatus = action === 'received' ? 'received' as const : 'confirmed' as const;
+      let orderStatus: OrderStatus = action === 'received' ? 'received' : 'confirmed';
       
       if (itemOrders && itemOrders.every(item => item.order_status === 'ready_to_deliver')) {
         orderStatus = 'ready_to_deliver';
