@@ -32,6 +32,7 @@ export const DeliveryDashboard = () => {
   const { data: orders, isLoading, refetch } = useQuery({
     queryKey: ['delivery-orders'],
     queryFn: async () => {
+      // First, get all quotes that have item_orders
       const { data: quotes, error } = await supabase
         .from('quotes')
         .select(`
@@ -47,13 +48,30 @@ export const DeliveryDashboard = () => {
               dietary_preference,
               course_type
             )
+          ),
+          item_orders (
+            order_status
           )
         `)
-        .in('order_status', ['ready_to_deliver', 'on_the_way', 'delivered', 'received'])
-        .order('created_at', { ascending: false });
+        .not('item_orders', 'is', null);
 
       if (error) throw error;
-      return quotes || [];
+
+      // Filter quotes where all items are ready_to_deliver or in later stages
+      const readyOrders = quotes?.filter(quote => {
+        // Check if all items are ready_to_deliver or in a later stage
+        const allItemsReady = quote.item_orders?.every(
+          order => ['ready_to_deliver', 'on_the_way', 'delivered'].includes(order.order_status)
+        );
+        // At least one item should be in ready_to_deliver state
+        const hasReadyItems = quote.item_orders?.some(
+          order => order.order_status === 'ready_to_deliver'
+        );
+        return allItemsReady && hasReadyItems;
+      });
+
+      console.log('Filtered ready orders:', readyOrders);
+      return readyOrders || [];
     },
   });
 
@@ -70,6 +88,14 @@ export const DeliveryDashboard = () => {
         .eq('id', id);
 
       if (error) throw error;
+
+      // Also update all item_orders for this quote
+      const { error: itemOrderError } = await supabase
+        .from('item_orders')
+        .update({ order_status: newStatus })
+        .eq('quote_id', id);
+
+      if (itemOrderError) throw itemOrderError;
 
       toast({
         title: "Success",
