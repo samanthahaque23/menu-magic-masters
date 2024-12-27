@@ -32,7 +32,7 @@ export const DeliveryDashboard = () => {
   const { data: orders, isLoading, refetch } = useQuery({
     queryKey: ['delivery-orders'],
     queryFn: async () => {
-      // First, get all quotes that have item_orders
+      // Get all quotes that have item_orders in ready_to_deliver or on_the_way status
       const { data: quotes, error } = await supabase
         .from('quotes')
         .select(`
@@ -58,16 +58,17 @@ export const DeliveryDashboard = () => {
       if (error) throw error;
 
       // Filter quotes where all items are ready_to_deliver or in later stages
+      // AND at least one item is in ready_to_deliver OR on_the_way state
       const readyOrders = quotes?.filter(quote => {
         // Check if all items are ready_to_deliver or in a later stage
         const allItemsReady = quote.item_orders?.every(
           order => ['ready_to_deliver', 'on_the_way', 'delivered'].includes(order.order_status)
         );
-        // At least one item should be in ready_to_deliver state
-        const hasReadyItems = quote.item_orders?.some(
-          order => order.order_status === 'ready_to_deliver'
+        // At least one item should be in ready_to_deliver OR on_the_way state
+        const hasReadyOrOnTheWayItems = quote.item_orders?.some(
+          order => order.order_status === 'ready_to_deliver' || order.order_status === 'on_the_way'
         );
-        return allItemsReady && hasReadyItems;
+        return allItemsReady && hasReadyOrOnTheWayItems;
       });
 
       console.log('Filtered ready orders:', readyOrders);
