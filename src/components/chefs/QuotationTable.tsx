@@ -59,23 +59,23 @@ export const QuotationTable = ({
     setPrices(newPrices);
   };
 
-  const determineOverallOrderStatus = (itemOrders: any[]) => {
+  const determineOverallOrderStatus = (itemOrders: any[]): OrderStatus => {
     if (itemOrders.every(item => item.order_status === 'received')) {
-      return 'received' as OrderStatus;
+      return 'received';
     }
     if (itemOrders.every(item => item.order_status === 'delivered')) {
-      return 'delivered' as OrderStatus;
+      return 'delivered';
     }
     if (itemOrders.every(item => item.order_status === 'ready_to_deliver')) {
-      return 'ready_to_deliver' as OrderStatus;
+      return 'ready_to_deliver';
     }
     if (itemOrders.some(item => item.order_status === 'on_the_way')) {
-      return 'on_the_way' as OrderStatus;
+      return 'on_the_way';
     }
     if (itemOrders.some(item => item.order_status === 'processing')) {
-      return 'processing' as OrderStatus;
+      return 'processing';
     }
-    return 'confirmed' as OrderStatus;
+    return 'confirmed';
   };
 
   const handleItemStatusUpdate = async (quoteId: string, itemId: string, newStatus: OrderStatus) => {
@@ -129,7 +129,7 @@ export const QuotationTable = ({
 
       toast({
         title: "Success",
-        description: "Item status updated successfully",
+        description: "Order status updated successfully",
       });
     } catch (error: any) {
       console.error('Error updating status:', error);
