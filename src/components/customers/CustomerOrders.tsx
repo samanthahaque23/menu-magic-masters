@@ -6,7 +6,6 @@ import { OrderProgress } from "../chefs/OrderProgress";
 import { format } from "date-fns";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { OrderStatus } from "@/integrations/supabase/types/enums";
 
 export const CustomerOrders = ({ orders, refetch }) => {
   const { toast } = useToast();
@@ -46,30 +45,13 @@ export const CustomerOrders = ({ orders, refetch }) => {
 
   const handleStatusUpdate = async (id: string, action: 'received' | 'confirm') => {
     try {
-      // First, check the status of all item_orders for this quote
-      const { data: itemOrders, error: fetchError } = await supabase
-        .from('item_orders')
-        .select('order_status')
-        .eq('quote_id', id);
-
-      if (fetchError) throw fetchError;
-
-      // Determine the overall order status based on item_orders
-      let orderStatus: OrderStatus = action === 'received' ? 'received' : 'confirmed';
-      
-      if (itemOrders && itemOrders.every(item => item.order_status === 'ready_to_deliver')) {
-        orderStatus = 'ready_to_deliver';
-      } else if (itemOrders && itemOrders.some(item => item.order_status === 'on_the_way')) {
-        orderStatus = 'on_the_way';
-      }
-
       const updateData = action === 'received' 
         ? { 
-            order_status: orderStatus
+            order_status: 'received' as const 
           }
         : { 
             is_confirmed: true, 
-            order_status: orderStatus,
+            order_status: 'confirmed' as const,
             quote_status: 'approved' as const
           };
 
