@@ -36,6 +36,7 @@ export const CustomerDashboard = () => {
     queryKey: ['customer-orders'],
     queryFn: async () => {
       console.log('Fetching customer orders...');
+      // Simplified query to avoid recursion
       const { data: quotes, error } = await supabase
         .from('quotes')
         .select(`
@@ -77,9 +78,10 @@ export const CustomerDashboard = () => {
         });
         throw error;
       }
-      console.log('Fetched quotes:', quotes);
+      
       return quotes || [];
     },
+    retry: false // Disable retries to avoid infinite loops on error
   });
 
   const handleSignOut = async () => {
