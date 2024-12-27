@@ -59,21 +59,63 @@ export const QuotationTable = ({
     setPrices(newPrices);
   };
 
+  const determineOverallOrderStatus = (itemOrders: any[]) => {
+    if (itemOrders.every(item => item.order_status === 'received')) {
+      return 'received' as OrderStatus;
+    }
+    if (itemOrders.every(item => item.order_status === 'delivered')) {
+      return 'delivered' as OrderStatus;
+    }
+    if (itemOrders.every(item => item.order_status === 'ready_to_deliver')) {
+      return 'ready_to_deliver' as OrderStatus;
+    }
+    if (itemOrders.some(item => item.order_status === 'on_the_way')) {
+      return 'on_the_way' as OrderStatus;
+    }
+    if (itemOrders.some(item => item.order_status === 'processing')) {
+      return 'processing' as OrderStatus;
+    }
+    return 'confirmed' as OrderStatus;
+  };
+
   const handleItemStatusUpdate = async (quoteId: string, itemId: string, newStatus: OrderStatus) => {
     try {
-      const { error } = await supabase
+      // First update the item_orders table
+      const { error: itemError } = await supabase
         .from('item_orders')
         .update({ order_status: newStatus })
         .eq('quote_id', quoteId)
         .eq('quote_item_id', itemId);
 
-      if (error) throw error;
+      if (itemError) throw itemError;
 
-      // Update local state immediately
+      // Fetch all item_orders for this quote to determine overall status
+      const { data: itemOrders, error: fetchError } = await supabase
+        .from('item_orders')
+        .select('order_status')
+        .eq('quote_id', quoteId);
+
+      if (fetchError) throw fetchError;
+
+      if (!itemOrders) return;
+
+      // Determine the overall order status based on all items
+      const overallStatus = determineOverallOrderStatus(itemOrders);
+
+      // Update the quotes table with the new overall status
+      const { error: quoteError } = await supabase
+        .from('quotes')
+        .update({ order_status: overallStatus })
+        .eq('id', quoteId);
+
+      if (quoteError) throw quoteError;
+
+      // Update local state
       setLocalQuotations(prev => prev.map(quotation => {
         if (quotation.id === quoteId) {
           return {
             ...quotation,
+            order_status: overallStatus,
             item_orders: quotation.item_orders?.map(order => {
               if (order.quote_item_id === itemId) {
                 return { ...order, order_status: newStatus };
@@ -90,6 +132,7 @@ export const QuotationTable = ({
         description: "Item status updated successfully",
       });
     } catch (error: any) {
+      console.error('Error updating status:', error);
       toast({
         variant: "destructive",
         title: "Error",
