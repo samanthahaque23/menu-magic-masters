@@ -59,7 +59,6 @@ export const CustomerDashboard = () => {
             chef_id,
             price,
             quote_status,
-            is_selected,
             is_visible_to_customer,
             profiles!chef_quotes_chef_id_fkey (
               full_name
