@@ -67,22 +67,31 @@ export const useQuotes = (session: any) => {
     try {
       console.log('Starting quote submission process...', { quoteId, itemPrices });
 
-      // First, update the quote status to approved but pending confirmation
-      const { error: quoteUpdateError } = await supabase
-        .from('quotes')
-        .update({ 
-          quote_status: 'approved' as QuoteStatus,
-          order_status: 'pending_confirmation' as OrderStatus,
-          is_confirmed: false 
-        })
-        .eq('id', quoteId);
+      // First, create chef item quotes for each item
+      const chefItemQuotes = Object.entries(itemPrices).map(([itemId, price]) => ({
+        quote_id: quoteId,
+        quote_item_id: itemId,
+        chef_id: session.user.id,
+        price: price,
+        quote_status: 'pending' as QuoteStatus,
+        is_visible_to_customer: true
+      }));
 
-      if (quoteUpdateError) {
-        console.error('Error updating quote status:', quoteUpdateError);
-        throw quoteUpdateError;
+      console.log('Creating chef item quotes:', chefItemQuotes);
+
+      const { data: insertedChefQuotes, error: chefQuotesError } = await supabase
+        .from('chef_item_quotes')
+        .insert(chefItemQuotes)
+        .select();
+
+      if (chefQuotesError) {
+        console.error('Error creating chef item quotes:', chefQuotesError);
+        throw chefQuotesError;
       }
 
-      // Create item orders with pending_confirmation status
+      console.log('Successfully created chef item quotes:', insertedChefQuotes);
+
+      // Then create item orders with pending_confirmation status
       const itemOrders = Object.entries(itemPrices).map(([itemId, price]) => ({
         quote_id: quoteId,
         quote_item_id: itemId,
@@ -105,6 +114,21 @@ export const useQuotes = (session: any) => {
       }
 
       console.log('Successfully created item orders:', insertedOrders);
+
+      // Update the quote status
+      const { error: quoteUpdateError } = await supabase
+        .from('quotes')
+        .update({ 
+          quote_status: 'approved' as QuoteStatus,
+          order_status: 'pending_confirmation' as OrderStatus,
+          is_confirmed: false 
+        })
+        .eq('id', quoteId);
+
+      if (quoteUpdateError) {
+        console.error('Error updating quote status:', quoteUpdateError);
+        throw quoteUpdateError;
+      }
 
       toast({
         title: "Success",
