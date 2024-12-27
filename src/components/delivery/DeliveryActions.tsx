@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 interface DeliveryActionsProps {
   order: any;
@@ -8,7 +7,7 @@ interface DeliveryActionsProps {
 
 export const DeliveryActions = ({ order, onStatusUpdate }: DeliveryActionsProps) => {
   if (order.order_status === 'delivered') {
-    return <Badge variant="secondary">Delivered</Badge>;
+    return null;
   }
 
   return (

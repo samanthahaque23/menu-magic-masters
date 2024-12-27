@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { QuoteStatus, OrderStatus } from "@/integrations/supabase/types/enums";
@@ -47,6 +47,7 @@ export const useQuotes = (session: any) => {
             order_status
           )
         `)
+        .or(`quote_status.eq.pending,item_orders.chef_id.eq.${session.user.id}`)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -54,10 +55,17 @@ export const useQuotes = (session: any) => {
         throw error;
       }
 
+      console.log('Fetched quotes:', quotes);
+
       return quotes?.filter(quote => {
+        if (!quote.profiles?.role || quote.profiles.role !== 'customer') return false;
+        
+        // Show pending quotes to all chefs
         if (quote.quote_status === 'pending') return true;
+        
+        // Show quotes where this chef has item orders
         if (quote.item_orders?.some(order => order.chef_id === session.user.id)) return true;
-        if (quote.chef_quotes?.some(q => q.chef_id === session.user.id)) return true;
+        
         return false;
       }) || [];
     }
@@ -65,46 +73,20 @@ export const useQuotes = (session: any) => {
 
   const handleQuoteSubmission = async (quoteId: string, itemPrices: Record<string, number>) => {
     try {
-      console.log('Starting quote submission process...', { quoteId, itemPrices });
-
-      // First, update the quote status to approved but pending confirmation
-      const { error: quoteUpdateError } = await supabase
-        .from('quotes')
-        .update({ 
-          quote_status: 'approved' as QuoteStatus,
-          order_status: 'pending_confirmation' as OrderStatus,
-          is_confirmed: false 
-        })
-        .eq('id', quoteId);
-
-      if (quoteUpdateError) {
-        console.error('Error updating quote status:', quoteUpdateError);
-        throw quoteUpdateError;
-      }
-
-      // Create item orders with pending_confirmation status
-      const itemOrders = Object.entries(itemPrices).map(([itemId, price]) => ({
+      // Create chef_item_quotes for each item
+      const chefItemQuotes = Object.entries(itemPrices).map(([itemId, price]) => ({
         quote_id: quoteId,
         quote_item_id: itemId,
         chef_id: session.user.id,
         price: price,
-        order_status: 'pending_confirmation' as OrderStatus,
-        is_confirmed: false
+        is_visible_to_customer: true
       }));
 
-      console.log('Creating item orders:', itemOrders);
+      const { error } = await supabase
+        .from('chef_item_quotes')
+        .insert(chefItemQuotes);
 
-      const { data: insertedOrders, error: ordersError } = await supabase
-        .from('item_orders')
-        .insert(itemOrders)
-        .select();
-
-      if (ordersError) {
-        console.error('Error creating item orders:', ordersError);
-        throw ordersError;
-      }
-
-      console.log('Successfully created item orders:', insertedOrders);
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -113,7 +95,6 @@ export const useQuotes = (session: any) => {
 
       queryClient.invalidateQueries({ queryKey: ['chef-quotes'] });
     } catch (error: any) {
-      console.error('Error in quote submission process:', error);
       toast({
         variant: "destructive",
         title: "Error",

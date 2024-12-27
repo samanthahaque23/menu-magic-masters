@@ -24,11 +24,8 @@ export interface QuoteItem {
 export interface ItemOrder {
   id: string;
   chef_id: string | null;
-  quote_id: string | null;
   quote_item_id: string | null;
   order_status: OrderStatus | null;
-  price: number;
-  created_at: string;
 }
 
 export interface Quote {
