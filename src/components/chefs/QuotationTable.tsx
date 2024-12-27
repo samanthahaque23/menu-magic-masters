@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { MenuItemsList } from "./quotation/MenuItemsList";
-import { OrderStatusList } from "./quotation/OrderStatusList";
+import { OrderProgress } from "./OrderProgress";
 
 interface QuotationTableProps {
   quotations: Quote[];
@@ -139,7 +139,10 @@ export const QuotationTable = ({
               </TableCell>
 
               <TableCell className="text-[#600000]">
-                <OrderStatusList quotation={quotation} chefId={quotation.chef_id || ''} />
+                <OrderProgress 
+                  quoteStatus={quotation.quote_status} 
+                  orderStatus={quotation.order_status}
+                />
               </TableCell>
 
               <TableCell>
@@ -157,31 +160,37 @@ export const QuotationTable = ({
                 )}
                 {quotation.quote_status === 'approved' && quotation.quote_items?.map((item) => {
                   const itemOrder = quotation.item_orders?.find(
-                    order => order.quote_item_id === item.id && order.chef_id === quotation.chef_id
+                    order => order.quote_item_id === item.id
                   );
                   if (!itemOrder) return null;
 
                   return (
                     <div key={item.id} className="mb-2">
                       <p className="text-sm font-medium mb-1">{item.food_items?.name}</p>
-                      {itemOrder.order_status === 'confirmed' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleItemStatusUpdate(quotation.id, item.id, 'processing')}
-                          className="bg-[#600000] hover:bg-[#600000]/90 text-white w-full"
-                        >
-                          Start Processing
-                        </Button>
-                      )}
-                      {itemOrder.order_status === 'processing' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleItemStatusUpdate(quotation.id, item.id, 'ready_to_deliver')}
-                          className="bg-[#600000] hover:bg-[#600000]/90 text-white w-full"
-                        >
-                          Mark Ready
-                        </Button>
-                      )}
+                      <div className="space-y-2">
+                        {itemOrder.order_status === 'confirmed' && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleItemStatusUpdate(quotation.id, item.id, 'processing')}
+                            className="bg-[#600000] hover:bg-[#600000]/90 text-white w-full"
+                          >
+                            Start Processing
+                          </Button>
+                        )}
+                        {itemOrder.order_status === 'processing' && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleItemStatusUpdate(quotation.id, item.id, 'ready_to_deliver')}
+                            className="bg-[#600000] hover:bg-[#600000]/90 text-white w-full"
+                          >
+                            Mark Ready to Deliver
+                          </Button>
+                        )}
+                        <OrderProgress 
+                          quoteStatus={quotation.quote_status} 
+                          orderStatus={itemOrder.order_status}
+                        />
+                      </div>
                     </div>
                   );
                 })}
