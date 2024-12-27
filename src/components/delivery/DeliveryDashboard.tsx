@@ -32,7 +32,6 @@ export const DeliveryDashboard = () => {
   const { data: orders, isLoading, refetch } = useQuery({
     queryKey: ['delivery-orders'],
     queryFn: async () => {
-      // Get all quotes that have item_orders in ready_to_deliver, on_the_way, or delivered status
       const { data: quotes, error } = await supabase
         .from('quotes')
         .select(`
@@ -48,30 +47,13 @@ export const DeliveryDashboard = () => {
               dietary_preference,
               course_type
             )
-          ),
-          item_orders (
-            order_status
           )
         `)
-        .not('item_orders', 'is', null);
+        .in('order_status', ['ready_to_deliver', 'on_the_way', 'delivered', 'received'])
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-
-      // Filter quotes where all items are ready_to_deliver or in later stages
-      const readyOrders = quotes?.filter(quote => {
-        // Check if all items are ready_to_deliver or in a later stage
-        const allItemsReady = quote.item_orders?.every(
-          order => ['ready_to_deliver', 'on_the_way', 'delivered'].includes(order.order_status)
-        );
-        // Include orders that are ready_to_deliver, on_the_way, or delivered
-        const hasDeliveryStatus = quote.item_orders?.some(
-          order => ['ready_to_deliver', 'on_the_way', 'delivered'].includes(order.order_status)
-        );
-        return allItemsReady && hasDeliveryStatus;
-      });
-
-      console.log('Filtered ready orders:', readyOrders);
-      return readyOrders || [];
+      return quotes || [];
     },
   });
 
@@ -88,14 +70,6 @@ export const DeliveryDashboard = () => {
         .eq('id', id);
 
       if (error) throw error;
-
-      // Also update all item_orders for this quote
-      const { error: itemOrderError } = await supabase
-        .from('item_orders')
-        .update({ order_status: newStatus })
-        .eq('quote_id', id);
-
-      if (itemOrderError) throw itemOrderError;
 
       toast({
         title: "Success",
