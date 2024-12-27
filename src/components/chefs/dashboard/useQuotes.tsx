@@ -44,7 +44,11 @@ export const useQuotes = (session: any) => {
             id,
             chef_id,
             quote_item_id,
-            order_status
+            order_status,
+            price,
+            profiles!item_orders_chef_id_fkey (
+              full_name
+            )
           )
         `)
         .order('created_at', { ascending: false });
@@ -98,7 +102,10 @@ export const useQuotes = (session: any) => {
         chef_id: session.user.id,
         price: price,
         order_status: 'pending_confirmation' as OrderStatus,
-        is_confirmed: false
+        is_confirmed: false,
+        chef_item_quote_id: insertedChefQuotes?.find(
+          quote => quote.quote_item_id === itemId
+        )?.id
       }));
 
       console.log('Creating item orders:', itemOrders);
