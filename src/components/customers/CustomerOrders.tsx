@@ -6,6 +6,7 @@ import { OrderProgress } from "../chefs/OrderProgress";
 import { format } from "date-fns";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { OrderStatus } from "@/integrations/supabase/types/enums";
 
 export const CustomerOrders = ({ orders, refetch }) => {
   const { toast } = useToast();
@@ -45,13 +46,30 @@ export const CustomerOrders = ({ orders, refetch }) => {
 
   const handleStatusUpdate = async (id: string, action: 'received' | 'confirm') => {
     try {
+      // First, check the status of all item_orders for this quote
+      const { data: itemOrders, error: fetchError } = await supabase
+        .from('item_orders')
+        .select('order_status')
+        .eq('quote_id', id);
+
+      if (fetchError) throw fetchError;
+
+      // Determine the overall order status based on item_orders
+      let orderStatus: OrderStatus = action === 'received' ? 'received' : 'confirmed';
+      
+      if (itemOrders && itemOrders.every(item => item.order_status === 'ready_to_deliver')) {
+        orderStatus = 'ready_to_deliver';
+      } else if (itemOrders && itemOrders.some(item => item.order_status === 'on_the_way')) {
+        orderStatus = 'on_the_way';
+      }
+
       const updateData = action === 'received' 
         ? { 
-            order_status: 'received' as const 
+            order_status: orderStatus
           }
         : { 
             is_confirmed: true, 
-            order_status: 'confirmed' as const,
+            order_status: orderStatus,
             quote_status: 'approved' as const
           };
 
@@ -107,7 +125,7 @@ export const CustomerOrders = ({ orders, refetch }) => {
                       ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
                     </div>
                     
-                    {order.chef_item_quotes && (
+                    {order.chef_item_quotes && order.chef_item_quotes.length > 0 && (
                       <div className="mt-2">
                         <h4 className="text-sm font-medium mb-2">Chef Quotes</h4>
                         <RadioGroup

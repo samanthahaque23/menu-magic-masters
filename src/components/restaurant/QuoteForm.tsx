@@ -16,8 +16,12 @@ interface QuoteFormProps {
 export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
   const [date, setDate] = useState<Date>();
   const { toast } = useToast();
-  const { register, handleSubmit, formState: { errors } } = useForm<QuoteFormData>();
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<QuoteFormData>();
   
+  // Watch the number of guests
+  const vegGuests = watch('vegGuests');
+  const nonVegGuests = watch('nonVegGuests');
+
   const onSubmit = async (data: QuoteFormData) => {
     try {
       if (!date) {
@@ -40,15 +44,16 @@ export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
         return;
       }
 
-      console.log('Creating quote with data:', {
-        customer_id: session.user.id,
-        party_date: date,
-        party_location: data.partyLocation,
-        veg_guests: data.vegGuests,
-        non_veg_guests: data.nonVegGuests,
+      // Adjust quantities based on guest numbers
+      const adjustedItems = items.map(item => {
+        const isVeg = item.foodItem.dietary_preference === 'vegetarian';
+        return {
+          ...item,
+          quantity: isVeg ? Number(vegGuests) : Number(nonVegGuests)
+        };
       });
 
-      // Create the quote
+      // Create the quote with customer_id
       const { data: quote, error: quoteError } = await supabase
         .from('quotes')
         .insert({
@@ -57,17 +62,14 @@ export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
           party_location: data.partyLocation,
           veg_guests: data.vegGuests,
           non_veg_guests: data.nonVegGuests,
-          quote_status: 'pending'
         })
         .select()
         .single();
 
       if (quoteError) throw quoteError;
 
-      console.log('Quote created:', quote);
-
-      // Create quote items
-      const quoteItems = items.map(item => ({
+      // Create quote items with adjusted quantities
+      const quoteItems = adjustedItems.map(item => ({
         quote_id: quote.id,
         food_item_id: item.foodItem.id,
         quantity: item.quantity,
@@ -86,11 +88,10 @@ export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
 
       onSuccess();
     } catch (error: any) {
-      console.error('Quote submission error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to submit quote",
+        description: error.message,
       });
     }
   };

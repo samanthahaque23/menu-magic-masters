@@ -106,26 +106,23 @@ export const useChefAuth = () => {
       setSession(null);
       setChefName("");
 
-      // Then attempt to sign out from Supabase
-      await supabase.auth.signOut({
-        scope: 'local'  // Changed from 'global' to 'local'
-      });
+      // Attempt to sign out from Supabase
+      await supabase.auth.signOut();
       
       toast({
         title: "Success",
         description: "Signed out successfully",
       });
-      
-      navigate('/chef/login');
     } catch (error: any) {
       console.error('Sign out error:', error);
-      // Even if there's an error, we should still clear local state and redirect
-      navigate('/chef/login');
       toast({
         variant: "destructive",
         title: "Warning",
-        description: "Session ended. You have been logged out.",
+        description: "There was an issue during sign out, but you have been logged out.",
       });
+    } finally {
+      // Always navigate to login page, regardless of API success
+      navigate('/chef/login');
     }
   };
 

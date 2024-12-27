@@ -1,15 +1,15 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Check } from "lucide-react";
 import { format } from "date-fns";
-import { OrderProgress } from "./OrderProgress";
 import { QuoteStatus, OrderStatus } from "@/integrations/supabase/types/enums";
 import type { Quote } from "@/integrations/supabase/types/quotes";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { MenuItemsList } from "./quotation/MenuItemsList";
+import { OrderProgress } from "./OrderProgress";
+import { ItemStatusActions } from "./quotation/ItemStatusActions";
 
 interface QuotationTableProps {
   quotations: Quote[];
@@ -24,6 +24,7 @@ export const QuotationTable = ({
 }: QuotationTableProps) => {
   const [prices, setPrices] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  const [localQuotations, setLocalQuotations] = useState(quotations);
 
   const handleSubmitQuote = async (quotation: Quote) => {
     // Validate that all items have prices
@@ -58,27 +59,93 @@ export const QuotationTable = ({
     setPrices(newPrices);
   };
 
+  const determineOverallOrderStatus = (itemOrders: any[]): OrderStatus => {
+    if (itemOrders.every(item => item.order_status === 'received')) {
+      return 'received';
+    }
+    if (itemOrders.every(item => item.order_status === 'delivered')) {
+      return 'delivered';
+    }
+    if (itemOrders.every(item => item.order_status === 'ready_to_deliver')) {
+      return 'ready_to_deliver';
+    }
+    if (itemOrders.some(item => item.order_status === 'on_the_way')) {
+      return 'on_the_way';
+    }
+    if (itemOrders.some(item => item.order_status === 'processing')) {
+      return 'processing';
+    }
+    return 'confirmed';
+  };
+
   const handleItemStatusUpdate = async (quoteId: string, itemId: string, newStatus: OrderStatus) => {
     try {
-      const { error } = await supabase
+      // First update the item_orders table
+      const { error: itemError } = await supabase
         .from('item_orders')
         .update({ order_status: newStatus })
         .eq('quote_id', quoteId)
         .eq('quote_item_id', itemId);
 
-      if (error) throw error;
+      if (itemError) throw itemError;
+
+      // Fetch all item_orders for this quote to determine overall status
+      const { data: itemOrders, error: fetchError } = await supabase
+        .from('item_orders')
+        .select('order_status')
+        .eq('quote_id', quoteId);
+
+      if (fetchError) throw fetchError;
+
+      if (!itemOrders) return;
+
+      // Determine the overall order status based on all items
+      const overallStatus = determineOverallOrderStatus(itemOrders);
+
+      // Update the quotes table with the new overall status
+      const { error: quoteError } = await supabase
+        .from('quotes')
+        .update({ order_status: overallStatus })
+        .eq('id', quoteId);
+
+      if (quoteError) throw quoteError;
+
+      // Update local state
+      setLocalQuotations(prev => prev.map(quotation => {
+        if (quotation.id === quoteId) {
+          return {
+            ...quotation,
+            order_status: overallStatus,
+            item_orders: quotation.item_orders?.map(order => {
+              if (order.quote_item_id === itemId) {
+                return { ...order, order_status: newStatus };
+              }
+              return order;
+            })
+          };
+        }
+        return quotation;
+      }));
 
       toast({
         title: "Success",
-        description: "Item status updated successfully",
+        description: "Order status updated successfully",
       });
     } catch (error: any) {
+      console.error('Error updating status:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: error.message,
       });
     }
+  };
+
+  const handlePriceChange = (quoteId: string, itemId: string, price: string) => {
+    setPrices(prev => ({
+      ...prev,
+      [`${quoteId}-${itemId}`]: price
+    }));
   };
 
   return (
@@ -94,7 +161,7 @@ export const QuotationTable = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {quotations?.map((quotation) => (
+          {localQuotations?.map((quotation) => (
             <TableRow 
               key={quotation.id}
               className="border-b border-[#600000]/10"
@@ -125,51 +192,18 @@ export const QuotationTable = ({
               </TableCell>
 
               <TableCell className="text-[#600000]">
-                <Card className="p-2 border border-[#600000]/10">
-                  <ul className="text-sm space-y-1">
-                    {quotation.quote_items?.map((item) => (
-                      <li key={item.id} className="flex justify-between items-center">
-                        <span>
-                          {item.food_items?.name} x{item.quantity}
-                          <span className="text-xs ml-2 opacity-75">
-                            ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
-                          </span>
-                        </span>
-                        {quotation.quote_status === 'pending' && (
-                          <Input
-                            type="number"
-                            placeholder="Price"
-                            className="w-24 ml-2"
-                            value={prices[`${quotation.id}-${item.id}`] || ''}
-                            onChange={(e) => setPrices(prev => ({
-                              ...prev,
-                              [`${quotation.id}-${item.id}`]: e.target.value
-                            }))}
-                          />
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
+                <MenuItemsList 
+                  quotation={quotation}
+                  prices={prices}
+                  onPriceChange={handlePriceChange}
+                />
               </TableCell>
 
               <TableCell className="text-[#600000]">
-                <div className="space-y-2">
-                  {quotation.quote_items?.map((item) => {
-                    const itemOrder = quotation.item_orders?.find(
-                      order => order.quote_item_id === item.id && order.chef_id === quotation.chef_id
-                    );
-                    return itemOrder ? (
-                      <div key={item.id} className="mb-2">
-                        <p className="text-sm font-medium mb-1">{item.food_items?.name}</p>
-                        <OrderProgress 
-                          quoteStatus={quotation.quote_status} 
-                          orderStatus={itemOrder.order_status}
-                        />
-                      </div>
-                    ) : null;
-                  })}
-                </div>
+                <OrderProgress 
+                  quoteStatus={quotation.quote_status} 
+                  orderStatus={quotation.order_status}
+                />
               </TableCell>
 
               <TableCell>
@@ -187,32 +221,19 @@ export const QuotationTable = ({
                 )}
                 {quotation.quote_status === 'approved' && quotation.quote_items?.map((item) => {
                   const itemOrder = quotation.item_orders?.find(
-                    order => order.quote_item_id === item.id && order.chef_id === quotation.chef_id
+                    order => order.quote_item_id === item.id
                   );
                   if (!itemOrder) return null;
 
                   return (
-                    <div key={item.id} className="mb-2">
-                      <p className="text-sm font-medium mb-1">{item.food_items?.name}</p>
-                      {itemOrder.order_status === 'confirmed' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleItemStatusUpdate(quotation.id, item.id, 'processing')}
-                          className="bg-[#600000] hover:bg-[#600000]/90 text-white w-full"
-                        >
-                          Start Processing
-                        </Button>
-                      )}
-                      {itemOrder.order_status === 'processing' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleItemStatusUpdate(quotation.id, item.id, 'ready_to_deliver')}
-                          className="bg-[#600000] hover:bg-[#600000]/90 text-white w-full"
-                        >
-                          Mark Ready
-                        </Button>
-                      )}
-                    </div>
+                    <ItemStatusActions
+                      key={item.id}
+                      quotation={quotation}
+                      itemId={item.id}
+                      itemName={item.food_items?.name || ''}
+                      orderStatus={itemOrder.order_status || 'confirmed'}
+                      onStatusUpdate={handleItemStatusUpdate}
+                    />
                   );
                 })}
               </TableCell>
