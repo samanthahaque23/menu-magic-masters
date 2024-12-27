@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { MenuItemsList } from "./quotation/MenuItemsList";
 import { OrderProgress } from "./OrderProgress";
+import { ItemStatusActions } from "./quotation/ItemStatusActions";
 
 interface QuotationTableProps {
   quotations: Quote[];
@@ -23,6 +24,7 @@ export const QuotationTable = ({
 }: QuotationTableProps) => {
   const [prices, setPrices] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  const [localQuotations, setLocalQuotations] = useState(quotations);
 
   const handleSubmitQuote = async (quotation: Quote) => {
     // Validate that all items have prices
@@ -67,6 +69,22 @@ export const QuotationTable = ({
 
       if (error) throw error;
 
+      // Update local state immediately
+      setLocalQuotations(prev => prev.map(quotation => {
+        if (quotation.id === quoteId) {
+          return {
+            ...quotation,
+            item_orders: quotation.item_orders?.map(order => {
+              if (order.quote_item_id === itemId) {
+                return { ...order, order_status: newStatus };
+              }
+              return order;
+            })
+          };
+        }
+        return quotation;
+      }));
+
       toast({
         title: "Success",
         description: "Item status updated successfully",
@@ -100,7 +118,7 @@ export const QuotationTable = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {quotations?.map((quotation) => (
+          {localQuotations?.map((quotation) => (
             <TableRow 
               key={quotation.id}
               className="border-b border-[#600000]/10"
@@ -165,33 +183,14 @@ export const QuotationTable = ({
                   if (!itemOrder) return null;
 
                   return (
-                    <div key={item.id} className="mb-2">
-                      <p className="text-sm font-medium mb-1">{item.food_items?.name}</p>
-                      <div className="space-y-2">
-                        {itemOrder.order_status === 'confirmed' && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleItemStatusUpdate(quotation.id, item.id, 'processing')}
-                            className="bg-[#600000] hover:bg-[#600000]/90 text-white w-full"
-                          >
-                            Start Processing
-                          </Button>
-                        )}
-                        {itemOrder.order_status === 'processing' && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleItemStatusUpdate(quotation.id, item.id, 'ready_to_deliver')}
-                            className="bg-[#600000] hover:bg-[#600000]/90 text-white w-full"
-                          >
-                            Mark Ready to Deliver
-                          </Button>
-                        )}
-                        <OrderProgress 
-                          quoteStatus={quotation.quote_status} 
-                          orderStatus={itemOrder.order_status}
-                        />
-                      </div>
-                    </div>
+                    <ItemStatusActions
+                      key={item.id}
+                      quotation={quotation}
+                      itemId={item.id}
+                      itemName={item.food_items?.name || ''}
+                      orderStatus={itemOrder.order_status || 'confirmed'}
+                      onStatusUpdate={handleItemStatusUpdate}
+                    />
                   );
                 })}
               </TableCell>
