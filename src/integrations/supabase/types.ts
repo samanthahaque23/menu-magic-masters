@@ -9,7 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      food_items: {
+        Row: {
+          course_type: Database["public"]["Enums"]["course_type"]
+          created_at: string
+          description: string | null
+          dietary_preference: Database["public"]["Enums"]["dietary_preference"]
+          id: string
+          image_url: string | null
+          is_available: boolean | null
+          name: string
+        }
+        Insert: {
+          course_type: Database["public"]["Enums"]["course_type"]
+          created_at?: string
+          description?: string | null
+          dietary_preference: Database["public"]["Enums"]["dietary_preference"]
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          name: string
+        }
+        Update: {
+          course_type?: Database["public"]["Enums"]["course_type"]
+          created_at?: string
+          description?: string | null
+          dietary_preference?: Database["public"]["Enums"]["dietary_preference"]
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +50,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      course_type: "starter" | "mains" | "desserts"
+      dietary_preference: "vegetarian" | "non-vegetarian"
     }
     CompositeTypes: {
       [_ in never]: never
