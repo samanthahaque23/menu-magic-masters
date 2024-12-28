@@ -9,6 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      chef_quotes: {
+        Row: {
+          chef_id: string | null
+          created_at: string
+          id: string
+          is_visible_to_customer: boolean | null
+          price: number
+          quote_id: string | null
+          quote_status: Database["public"]["Enums"]["quote_status"] | null
+        }
+        Insert: {
+          chef_id?: string | null
+          created_at?: string
+          id?: string
+          is_visible_to_customer?: boolean | null
+          price: number
+          quote_id?: string | null
+          quote_status?: Database["public"]["Enums"]["quote_status"] | null
+        }
+        Update: {
+          chef_id?: string | null
+          created_at?: string
+          id?: string
+          is_visible_to_customer?: boolean | null
+          price?: number
+          quote_id?: string | null
+          quote_status?: Database["public"]["Enums"]["quote_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chef_quotes_chef_id_fkey"
+            columns: ["chef_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chef_quotes_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chefs: {
         Row: {
           created_at: string
@@ -132,6 +177,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          phone: string | null
           role: Database["public"]["Enums"]["user_role"]
         }
         Insert: {
@@ -139,6 +185,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
         }
         Update: {
@@ -146,9 +193,109 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
         }
         Relationships: []
+      }
+      quote_items: {
+        Row: {
+          created_at: string
+          food_item_id: string | null
+          id: string
+          quantity: number | null
+          quote_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          food_item_id?: string | null
+          id?: string
+          quantity?: number | null
+          quote_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          food_item_id?: string | null
+          id?: string
+          quantity?: number | null
+          quote_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_items_food_item_id_fkey"
+            columns: ["food_item_id"]
+            isOneToOne: false
+            referencedRelation: "food_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          chef_id: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          is_confirmed: boolean | null
+          non_veg_guests: number | null
+          order_status: Database["public"]["Enums"]["order_status"] | null
+          party_date: string | null
+          party_location: string | null
+          quote_status: Database["public"]["Enums"]["quote_status"] | null
+          total_price: number | null
+          veg_guests: number | null
+        }
+        Insert: {
+          chef_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          is_confirmed?: boolean | null
+          non_veg_guests?: number | null
+          order_status?: Database["public"]["Enums"]["order_status"] | null
+          party_date?: string | null
+          party_location?: string | null
+          quote_status?: Database["public"]["Enums"]["quote_status"] | null
+          total_price?: number | null
+          veg_guests?: number | null
+        }
+        Update: {
+          chef_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          is_confirmed?: boolean | null
+          non_veg_guests?: number | null
+          order_status?: Database["public"]["Enums"]["order_status"] | null
+          party_date?: string | null
+          party_location?: string | null
+          quote_status?: Database["public"]["Enums"]["quote_status"] | null
+          total_price?: number | null
+          veg_guests?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_chef_id_fkey"
+            columns: ["chef_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -160,6 +307,15 @@ export type Database = {
     Enums: {
       course_type: "starter" | "mains" | "desserts"
       dietary_preference: "vegetarian" | "non-vegetarian"
+      order_status:
+        | "pending_confirmation"
+        | "confirmed"
+        | "processing"
+        | "ready_to_deliver"
+        | "on_the_way"
+        | "delivered"
+        | "received"
+      quote_status: "pending" | "approved" | "rejected" | "rejected_by_customer"
       user_role: "admin" | "chef" | "customer" | "delivery"
     }
     CompositeTypes: {
