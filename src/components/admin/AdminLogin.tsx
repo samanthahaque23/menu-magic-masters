@@ -27,12 +27,17 @@ export const AdminLogin = () => {
 
       if (signInError) throw signInError;
 
+      console.log("Sign in successful:", signInData);
+
       // After successful sign in, check if user has admin role
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, email')
         .eq('id', signInData.user.id)
         .single();
+
+      console.log("Profile data:", profileData);
+      console.log("Profile error:", profileError);
 
       if (profileError) {
         await supabase.auth.signOut();
@@ -40,6 +45,7 @@ export const AdminLogin = () => {
       }
 
       if (profileData.role !== 'admin') {
+        console.log("Current role:", profileData.role);
         await supabase.auth.signOut();
         throw new Error('Unauthorized access. Admin privileges required.');
       }
@@ -51,6 +57,7 @@ export const AdminLogin = () => {
       
       navigate('/admin');
     } catch (error: any) {
+      console.error("Login error:", error);
       toast({
         variant: "destructive",
         title: "Error",
