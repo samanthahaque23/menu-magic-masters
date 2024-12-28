@@ -32,15 +32,21 @@ export const CustomerDashboard = () => {
     checkAuth();
   }, [navigate]);
 
-  const { data: orders, isLoading, error, refetch } = useQuery({
+  const { data: orders = [], isLoading, error, refetch } = useQuery({
     queryKey: ['customer-orders'],
     queryFn: async () => {
-      console.log('Fetching customer orders...');
       try {
         const { data, error } = await supabase
           .from('quotes')
           .select(`
-            *,
+            id,
+            party_date,
+            party_location,
+            veg_guests,
+            non_veg_guests,
+            quote_status,
+            order_status,
+            created_at,
             profiles!quotes_customer_id_fkey (
               full_name,
               email
@@ -69,25 +75,16 @@ export const CustomerDashboard = () => {
           `)
           .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('Error fetching orders:', error);
-          throw error;
-        }
-
+        if (error) throw error;
         return data || [];
-      } catch (error: any) {
-        console.error('Error in query function:', error);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
         throw error;
       }
     },
     retry: false,
     refetchOnWindowFocus: false
   });
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/restaurant');
-  };
 
   if (isLoading) return <div className="flex items-center justify-center p-8">Loading...</div>;
 
@@ -102,7 +99,10 @@ export const CustomerDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardNav userName={customerName} onSignOut={handleSignOut} />
+      <DashboardNav userName={customerName} onSignOut={async () => {
+        await supabase.auth.signOut();
+        navigate('/restaurant');
+      }} />
       <div className="container mx-auto py-8">
         <h2 className="text-3xl font-bold mb-6">My Orders</h2>
         <CustomerOrders orders={orders} refetch={refetch} />
