@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,7 @@ export const CustomerDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [customerName, setCustomerName] = useState("");
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -128,7 +129,6 @@ export const CustomerDashboard = () => {
       <div className="container mx-auto py-8">
         <h2 className="text-3xl font-bold mb-6">My Orders</h2>
         <CustomerOrders orders={orders} refetch={() => {
-          // Trigger a refetch of the orders query
           queryClient.invalidateQueries({ queryKey: ['customer-orders'] });
         }} />
       </div>
