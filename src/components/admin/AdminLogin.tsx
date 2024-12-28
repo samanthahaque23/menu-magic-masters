@@ -25,14 +25,7 @@ export const AdminLogin = () => {
         password,
       });
 
-      if (signInError) {
-        console.error('Sign in error:', signInError);
-        throw new Error(signInError.message);
-      }
-
-      if (!signInData.user) {
-        throw new Error('No user data returned');
-      }
+      if (signInError) throw signInError;
 
       // After successful sign in, check if user has admin role
       const { data: profileData, error: profileError } = await supabase
@@ -42,14 +35,11 @@ export const AdminLogin = () => {
         .single();
 
       if (profileError) {
-        console.error('Profile fetch error:', profileError);
-        // Sign out the user since they don't have proper access
         await supabase.auth.signOut();
         throw new Error('Failed to verify admin privileges');
       }
 
       if (profileData.role !== 'admin') {
-        // Sign out the user since they don't have admin access
         await supabase.auth.signOut();
         throw new Error('Unauthorized access. Admin privileges required.');
       }
