@@ -27,6 +27,33 @@ export const RestaurantMenu = () => {
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
           if (event === 'SIGNED_IN') {
+            // Check if profile exists using maybeSingle() instead of single()
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('email', session?.user?.email)
+              .maybeSingle();
+
+            if (profileError) {
+              console.error('Profile fetch error:', profileError);
+              toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to fetch user profile.",
+              });
+              return;
+            }
+
+            if (!profile) {
+              console.log('No profile found, user might need to complete registration');
+              toast({
+                variant: "destructive",
+                title: "Profile Not Found",
+                description: "Please complete your registration.",
+              });
+              return;
+            }
+
             setUser(session?.user ?? null);
             setShowAuthDialog(false);
             toast({
