@@ -19,23 +19,37 @@ export const AdminLogin = () => {
     setLoading(true);
 
     try {
+      // First, attempt to sign in
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (signInError) throw signInError;
+      if (signInError) {
+        console.error('Sign in error:', signInError);
+        throw new Error(signInError.message);
+      }
 
-      // Check if user is admin
+      if (!signInData.user) {
+        throw new Error('No user data returned');
+      }
+
+      // After successful sign in, check if user has admin role
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', signInData.user.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+        // Sign out the user since they don't have proper access
+        await supabase.auth.signOut();
+        throw new Error('Failed to verify admin privileges');
+      }
 
       if (profileData.role !== 'admin') {
+        // Sign out the user since they don't have admin access
         await supabase.auth.signOut();
         throw new Error('Unauthorized access. Admin privileges required.');
       }
@@ -44,12 +58,13 @@ export const AdminLogin = () => {
         title: "Success",
         description: "Logged in successfully",
       });
+      
       navigate('/admin');
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to login",
       });
     } finally {
       setLoading(false);
@@ -68,7 +83,7 @@ export const AdminLogin = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@ffh.com"
+              placeholder="admin@example.com"
               required
             />
           </div>
