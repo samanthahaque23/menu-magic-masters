@@ -54,24 +54,14 @@ export const CustomerDashboard = () => {
               course_type
             )
           ),
-          chef_quotes (
+          chef_item_quotes (
             id,
             chef_id,
             price,
-            quote_status,
+            quote_item_id,
             is_selected,
             is_visible_to_customer,
-            profiles!chef_quotes_chef_id_fkey (
-              full_name
-            )
-          ),
-          item_orders (
-            id,
-            chef_id,
-            quote_item_id,
-            order_status,
-            price,
-            profiles!item_orders_chef_id_fkey (
+            profiles:chef_id (
               full_name
             )
           )

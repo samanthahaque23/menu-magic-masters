@@ -125,7 +125,7 @@ export const CustomerOrders = ({ orders, refetch }) => {
                       ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
                     </div>
                     
-                    {order.chef_item_quotes && order.chef_item_quotes.length > 0 && (
+                    {order.chef_item_quotes && (
                       <div className="mt-2">
                         <h4 className="text-sm font-medium mb-2">Chef Quotes</h4>
                         <RadioGroup
