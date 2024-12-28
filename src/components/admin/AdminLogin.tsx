@@ -19,7 +19,6 @@ export const AdminLogin = () => {
     setLoading(true);
 
     try {
-      // First, attempt to sign in
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -29,23 +28,23 @@ export const AdminLogin = () => {
 
       console.log("Sign in successful:", signInData);
 
-      // After successful sign in, check if user has admin role
+      // First query to get the profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('role, email')
+        .select('role')
         .eq('id', signInData.user.id)
         .single();
 
-      console.log("Profile data:", profileData);
-      console.log("Profile error:", profileError);
-
       if (profileError) {
+        console.error("Profile error:", profileError);
         await supabase.auth.signOut();
         throw new Error('Failed to verify admin privileges');
       }
 
-      if (profileData.role !== 'admin') {
-        console.log("Current role:", profileData.role);
+      console.log("Profile data:", profileData);
+
+      if (!profileData || profileData.role !== 'admin') {
+        console.log("Current role:", profileData?.role);
         await supabase.auth.signOut();
         throw new Error('Unauthorized access. Admin privileges required.');
       }
