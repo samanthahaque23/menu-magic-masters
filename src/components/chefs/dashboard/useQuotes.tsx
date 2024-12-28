@@ -67,13 +67,13 @@ export const useQuotes = (session: any) => {
     try {
       console.log('Starting quote submission process...', { quoteId, itemPrices });
 
-      // First, update the quote status
+      // First, update the quote status to approved but pending confirmation
       const { error: quoteUpdateError } = await supabase
         .from('quotes')
         .update({ 
           quote_status: 'approved' as QuoteStatus,
-          order_status: 'confirmed' as OrderStatus,
-          is_confirmed: true 
+          order_status: 'pending_confirmation' as OrderStatus,
+          is_confirmed: false 
         })
         .eq('id', quoteId);
 
@@ -82,14 +82,14 @@ export const useQuotes = (session: any) => {
         throw quoteUpdateError;
       }
 
-      // Create item orders directly
+      // Create item orders with pending_confirmation status
       const itemOrders = Object.entries(itemPrices).map(([itemId, price]) => ({
         quote_id: quoteId,
         quote_item_id: itemId,
         chef_id: session.user.id,
         price: price,
-        order_status: 'confirmed' as OrderStatus,
-        is_confirmed: true
+        order_status: 'pending_confirmation' as OrderStatus,
+        is_confirmed: false
       }));
 
       console.log('Creating item orders:', itemOrders);

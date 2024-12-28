@@ -36,7 +36,6 @@ export const CustomerDashboard = () => {
     queryKey: ['customer-orders'],
     queryFn: async () => {
       console.log('Fetching customer orders...');
-      // Simplified query to avoid recursion
       const { data: quotes, error } = await supabase
         .from('quotes')
         .select(`
@@ -55,14 +54,24 @@ export const CustomerDashboard = () => {
               course_type
             )
           ),
-          chef_item_quotes (
+          chef_quotes (
             id,
             chef_id,
             price,
-            quote_item_id,
+            quote_status,
             is_selected,
             is_visible_to_customer,
-            profiles:chef_id (
+            profiles!chef_quotes_chef_id_fkey (
+              full_name
+            )
+          ),
+          item_orders (
+            id,
+            chef_id,
+            quote_item_id,
+            order_status,
+            price,
+            profiles!item_orders_chef_id_fkey (
               full_name
             )
           )
@@ -78,10 +87,9 @@ export const CustomerDashboard = () => {
         });
         throw error;
       }
-      
+      console.log('Fetched quotes:', quotes);
       return quotes || [];
     },
-    retry: false // Disable retries to avoid infinite loops on error
   });
 
   const handleSignOut = async () => {
