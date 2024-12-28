@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +15,7 @@ interface FoodItemFormProps {
 
 export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormProps) => {
   const [loading, setLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     description: initialData?.description || '',
@@ -25,6 +26,48 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { toast } = useToast();
 
+  useEffect(() => {
+    checkAdminStatus();
+  }, []);
+
+  const checkAdminStatus = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to perform this action",
+        });
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profile?.role !== 'admin') {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be an admin to perform this action",
+        });
+        return;
+      }
+
+      setIsAdmin(true);
+    } catch (error: any) {
+      console.error('Error checking admin status:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to verify admin status",
+      });
+    }
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImageFile(e.target.files[0]);
@@ -32,6 +75,10 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
   };
 
   const uploadImage = async (file: File) => {
+    if (!isAdmin) {
+      throw new Error('Unauthorized: Admin access required');
+    }
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random()}.${fileExt}`;
     const filePath = `${fileName}`;
@@ -51,6 +98,15 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "You must be an admin to perform this action",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -89,6 +145,7 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
       }
       onSuccess();
     } catch (error: any) {
+      console.error('Error submitting form:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -173,7 +230,7 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading || !isAdmin}>
           {loading ? 'Saving...' : initialData ? 'Update' : 'Create'}
         </Button>
       </div>
