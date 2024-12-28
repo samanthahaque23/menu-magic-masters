@@ -36,50 +36,52 @@ export const CustomerDashboard = () => {
     queryKey: ['customer-orders'],
     queryFn: async () => {
       console.log('Fetching customer orders...');
-      const { data: quotes, error } = await supabase
-        .from('quotes')
-        .select(`
-          *,
-          profiles!quotes_customer_id_fkey (
-            full_name,
-            email
-          ),
-          quote_items (
-            id,
-            quantity,
-            food_items (
+      try {
+        const { data, error } = await supabase
+          .from('quotes')
+          .select(`
+            *,
+            profiles!quotes_customer_id_fkey (
+              full_name,
+              email
+            ),
+            quote_items (
               id,
-              name,
-              dietary_preference,
-              course_type
+              quantity,
+              food_items (
+                id,
+                name,
+                dietary_preference,
+                course_type
+              )
+            ),
+            chef_item_quotes (
+              id,
+              chef_id,
+              price,
+              quote_item_id,
+              is_selected,
+              is_visible_to_customer,
+              profiles:chef_id (
+                full_name
+              )
             )
-          ),
-          chef_item_quotes (
-            id,
-            chef_id,
-            price,
-            quote_item_id,
-            is_selected,
-            is_visible_to_customer,
-            profiles:chef_id (
-              full_name
-            )
-          )
-        `)
-        .order('created_at', { ascending: false });
+          `)
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching orders:', error);
-        toast({
-          variant: "destructive",
-          title: "Error fetching orders",
-          description: error.message,
-        });
+        if (error) {
+          console.error('Error fetching orders:', error);
+          throw error;
+        }
+
+        return data || [];
+      } catch (error: any) {
+        console.error('Error in query function:', error);
         throw error;
       }
-      console.log('Fetched quotes:', quotes);
-      return quotes || [];
     },
+    retry: false,
+    refetchOnWindowFocus: false
   });
 
   const handleSignOut = async () => {
@@ -89,11 +91,14 @@ export const CustomerDashboard = () => {
 
   if (isLoading) return <div className="flex items-center justify-center p-8">Loading...</div>;
 
-  if (error) return (
-    <div className="container mx-auto py-8">
-      <div className="text-red-500">Error loading orders. Please try again later.</div>
-    </div>
-  );
+  if (error) {
+    console.error('Error loading orders:', error);
+    return (
+      <div className="container mx-auto py-8">
+        <div className="text-red-500">Error loading orders. Please try again later.</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

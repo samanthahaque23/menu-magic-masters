@@ -72,6 +72,7 @@ export type Database = {
           chef_id: string | null
           created_at: string
           id: string
+          is_selected: boolean | null
           is_visible_to_customer: boolean | null
           price: number
           quote_id: string | null
@@ -82,6 +83,7 @@ export type Database = {
           chef_id?: string | null
           created_at?: string
           id?: string
+          is_selected?: boolean | null
           is_visible_to_customer?: boolean | null
           price: number
           quote_id?: string | null
@@ -92,6 +94,7 @@ export type Database = {
           chef_id?: string | null
           created_at?: string
           id?: string
+          is_selected?: boolean | null
           is_visible_to_customer?: boolean | null
           price?: number
           quote_id?: string | null
