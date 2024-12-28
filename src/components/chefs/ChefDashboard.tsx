@@ -3,7 +3,6 @@ import { QuotationTable } from "./QuotationTable";
 import { useChefAuth } from "./dashboard/useChefAuth";
 import { useQuotes } from "./dashboard/useQuotes";
 import { DashboardNav } from "../shared/DashboardNav";
-import { OrderProgress } from "./OrderProgress";
 
 export const ChefDashboard = () => {
   const { session, chefName, handleSignOut } = useChefAuth();
@@ -29,15 +28,7 @@ export const ChefDashboard = () => {
           <TabsContent value="quotes" className="mt-6">
             <div className="bg-white rounded-lg shadow-sm">
               <QuotationTable 
-                quotations={quotes?.map(quote => ({
-                  ...quote,
-                  statusDisplay: (
-                    <OrderProgress 
-                      quoteStatus={quote.quote_status} 
-                      orderStatus={quote.order_status}
-                    />
-                  )
-                })) || []} 
+                quotations={quotes || []} 
                 onStatusUpdate={handleStatusUpdate}
                 onQuoteSubmit={handleQuoteSubmission}
               />

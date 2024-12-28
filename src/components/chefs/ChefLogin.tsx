@@ -88,18 +88,11 @@ export const ChefLogin = () => {
               }}
               theme="light"
               providers={[]}
-              view="sign_in"
-              showLinks={false}
               redirectTo={window.location.origin + '/chef'}
-              localization={{
-                variables: {
-                  sign_in: {
-                    email_label: 'Email',
-                    password_label: 'Password',
-                    button_label: 'Sign In',
-                  },
-                },
-              }}
+              onlyThirdPartyProviders={false}
+              magicLink={false}
+              showLinks={false}
+              view="sign_in"
             />
           )}
         </div>

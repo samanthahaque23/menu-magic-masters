@@ -1,20 +1,18 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Check } from "lucide-react";
 import { format } from "date-fns";
+import { OrderProgress } from "./OrderProgress";
 import { QuoteStatus, OrderStatus } from "@/integrations/supabase/types/enums";
 import type { Quote } from "@/integrations/supabase/types/quotes";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { MenuItemsList } from "./quotation/MenuItemsList";
-import { OrderProgress } from "./OrderProgress";
-import { ItemStatusActions } from "./quotation/ItemStatusActions";
 
 interface QuotationTableProps {
   quotations: Quote[];
   onStatusUpdate: (id: string, quoteStatus: QuoteStatus, orderStatus?: OrderStatus) => void;
-  onQuoteSubmit: (quoteId: string, itemPrices: Record<string, number>) => void;
+  onQuoteSubmit: (quoteId: string, price: number) => void;
 }
 
 export const QuotationTable = ({ 
@@ -23,128 +21,16 @@ export const QuotationTable = ({
   onQuoteSubmit
 }: QuotationTableProps) => {
   const [prices, setPrices] = useState<Record<string, string>>({});
-  const { toast } = useToast();
-  const [localQuotations, setLocalQuotations] = useState(quotations);
 
-  const handleSubmitQuote = async (quotation: Quote) => {
-    // Validate that all items have prices
-    const itemPrices: Record<string, number> = {};
-    let isValid = true;
-
-    quotation.quote_items?.forEach(item => {
-      const price = parseFloat(prices[`${quotation.id}-${item.id}`] || "0");
-      if (!price || price <= 0) {
-        isValid = false;
-        return;
-      }
-      itemPrices[item.id] = price;
-    });
-
-    if (!isValid) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please enter valid prices for all items"
-      });
-      return;
-    }
+  const handleSubmitQuote = (quotation: Quote) => {
+    const price = parseFloat(prices[quotation.id] || "0");
+    if (!price || price <= 0) return;
     
-    onQuoteSubmit(quotation.id, itemPrices);
+    onQuoteSubmit(quotation.id, price);
     
-    // Clear prices for this quote
-    const newPrices = { ...prices };
-    quotation.quote_items?.forEach(item => {
-      delete newPrices[`${quotation.id}-${item.id}`];
-    });
-    setPrices(newPrices);
-  };
-
-  const determineOverallOrderStatus = (itemOrders: any[]): OrderStatus => {
-    if (itemOrders.every(item => item.order_status === 'received')) {
-      return 'received';
-    }
-    if (itemOrders.every(item => item.order_status === 'delivered')) {
-      return 'delivered';
-    }
-    if (itemOrders.every(item => item.order_status === 'ready_to_deliver')) {
-      return 'ready_to_deliver';
-    }
-    if (itemOrders.some(item => item.order_status === 'on_the_way')) {
-      return 'on_the_way';
-    }
-    if (itemOrders.some(item => item.order_status === 'processing')) {
-      return 'processing';
-    }
-    return 'confirmed';
-  };
-
-  const handleItemStatusUpdate = async (quoteId: string, itemId: string, newStatus: OrderStatus) => {
-    try {
-      // First update the item_orders table
-      const { error: itemError } = await supabase
-        .from('item_orders')
-        .update({ order_status: newStatus })
-        .eq('quote_id', quoteId)
-        .eq('quote_item_id', itemId);
-
-      if (itemError) throw itemError;
-
-      // Fetch all item_orders for this quote to determine overall status
-      const { data: itemOrders, error: fetchError } = await supabase
-        .from('item_orders')
-        .select('order_status')
-        .eq('quote_id', quoteId);
-
-      if (fetchError) throw fetchError;
-
-      if (!itemOrders) return;
-
-      // Determine the overall order status based on all items
-      const overallStatus = determineOverallOrderStatus(itemOrders);
-
-      // Update the quotes table with the new overall status
-      const { error: quoteError } = await supabase
-        .from('quotes')
-        .update({ order_status: overallStatus })
-        .eq('id', quoteId);
-
-      if (quoteError) throw quoteError;
-
-      // Update local state
-      setLocalQuotations(prev => prev.map(quotation => {
-        if (quotation.id === quoteId) {
-          return {
-            ...quotation,
-            order_status: overallStatus,
-            item_orders: quotation.item_orders?.map(order => {
-              if (order.quote_item_id === itemId) {
-                return { ...order, order_status: newStatus };
-              }
-              return order;
-            })
-          };
-        }
-        return quotation;
-      }));
-
-      toast({
-        title: "Success",
-        description: "Order status updated successfully",
-      });
-    } catch (error: any) {
-      console.error('Error updating status:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    }
-  };
-
-  const handlePriceChange = (quoteId: string, itemId: string, price: string) => {
     setPrices(prev => ({
       ...prev,
-      [`${quoteId}-${itemId}`]: price
+      [quotation.id]: ''
     }));
   };
 
@@ -161,7 +47,7 @@ export const QuotationTable = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {localQuotations?.map((quotation) => (
+          {quotations?.map((quotation) => (
             <TableRow 
               key={quotation.id}
               className="border-b border-[#600000]/10"
@@ -181,61 +67,94 @@ export const QuotationTable = ({
                   )}
                 </div>
               </TableCell>
-              
               <TableCell className="text-[#600000]">
                 <div>
                   <p>Date: {quotation.party_date ? format(new Date(quotation.party_date), 'PPP') : 'N/A'}</p>
                   <p>Location: {quotation.party_location}</p>
                   <p>Veg Guests: {quotation.veg_guests}</p>
                   <p>Non-veg Guests: {quotation.non_veg_guests}</p>
+                  {quotation.chef_quotes && quotation.chef_quotes.length > 0 && (
+                    <div className="mt-2">
+                      <p className="font-semibold">Submitted Quotes:</p>
+                      <ul className="text-sm space-y-1">
+                        {quotation.chef_quotes.map((chefQuote) => (
+                          <li key={chefQuote.id}>
+                            Price: ${chefQuote.price}
+                            {chefQuote.quote_status === 'approved' && (
+                              <span className="ml-2 text-green-500">(Selected)</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </TableCell>
-
               <TableCell className="text-[#600000]">
-                <MenuItemsList 
-                  quotation={quotation}
-                  prices={prices}
-                  onPriceChange={handlePriceChange}
-                />
+                <Card className="p-2 border border-[#600000]/10">
+                  <ul className="text-sm space-y-1">
+                    {quotation.quote_items?.map((item, index) => (
+                      <li key={index}>
+                        {item.food_items?.name} x{item.quantity}
+                        <span className="text-xs ml-2 opacity-75">
+                          ({item.food_items?.dietary_preference}, {item.food_items?.course_type})
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
               </TableCell>
-
               <TableCell className="text-[#600000]">
                 <OrderProgress 
                   quoteStatus={quotation.quote_status} 
                   orderStatus={quotation.order_status}
                 />
               </TableCell>
-
               <TableCell>
                 {quotation.quote_status === 'pending' && !quotation.chef_quotes?.some(q => q.chef_id === quotation.chef_id) && (
                   <div className="space-y-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleSubmitQuote(quotation)}
-                      className="bg-[#600000] hover:bg-[#600000]/90 text-white"
-                    >
-                      <Check className="h-4 w-4 mr-1" />
-                      Submit Quote
-                    </Button>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        type="number"
+                        placeholder="Enter price"
+                        value={prices[quotation.id] || ''}
+                        onChange={(e) => setPrices(prev => ({
+                          ...prev,
+                          [quotation.id]: e.target.value
+                        }))}
+                        className="w-32 border-[#600000]/20 text-[#600000]"
+                      />
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleSubmitQuote(quotation)}
+                        className="bg-[#600000] hover:bg-[#600000]/90 text-white"
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Submit Quote
+                      </Button>
+                    </div>
                   </div>
                 )}
-                {quotation.quote_status === 'approved' && quotation.quote_items?.map((item) => {
-                  const itemOrder = quotation.item_orders?.find(
-                    order => order.quote_item_id === item.id
-                  );
-                  if (!itemOrder) return null;
-
-                  return (
-                    <ItemStatusActions
-                      key={item.id}
-                      quotation={quotation}
-                      itemId={item.id}
-                      itemName={item.food_items?.name || ''}
-                      orderStatus={itemOrder.order_status || 'confirmed'}
-                      onStatusUpdate={handleItemStatusUpdate}
-                    />
-                  );
-                })}
+                {quotation.quote_status === 'approved' && quotation.order_status === 'confirmed' && (
+                  <Button
+                    size="sm"
+                    onClick={() => onStatusUpdate(quotation.id, 'approved', 'processing')}
+                    className="bg-[#600000] hover:bg-[#600000]/90 text-white"
+                  >
+                    Start Processing
+                  </Button>
+                )}
+                {quotation.quote_status === 'approved' && quotation.order_status === 'processing' && (
+                  <Button
+                    size="sm"
+                    onClick={() => onStatusUpdate(quotation.id, 'approved', 'ready_to_deliver')}
+                    className="bg-[#600000] hover:bg-[#600000]/90 text-white"
+                  >
+                    Mark Ready
+                  </Button>
+                )}
               </TableCell>
             </TableRow>
           ))}

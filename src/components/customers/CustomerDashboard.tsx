@@ -35,7 +35,6 @@ export const CustomerDashboard = () => {
   const { data: orders, isLoading, error, refetch } = useQuery({
     queryKey: ['customer-orders'],
     queryFn: async () => {
-      console.log('Fetching customer orders...');
       const { data: quotes, error } = await supabase
         .from('quotes')
         .select(`
@@ -45,21 +44,18 @@ export const CustomerDashboard = () => {
             email
           ),
           quote_items (
-            id,
             quantity,
             food_items (
-              id,
               name,
               dietary_preference,
               course_type
             )
           ),
-          chef_item_quotes (
+          chef_quotes (
             id,
             chef_id,
             price,
-            quote_item_id,
-            is_selected,
+            quote_status,
             is_visible_to_customer,
             profiles:chef_id (
               full_name
@@ -69,7 +65,6 @@ export const CustomerDashboard = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching orders:', error);
         toast({
           variant: "destructive",
           title: "Error fetching orders",
@@ -77,7 +72,6 @@ export const CustomerDashboard = () => {
         });
         throw error;
       }
-      console.log('Fetched quotes:', quotes);
       return quotes || [];
     },
   });

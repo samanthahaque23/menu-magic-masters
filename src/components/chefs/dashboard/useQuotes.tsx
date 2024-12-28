@@ -11,7 +11,6 @@ export const useQuotes = (session: any) => {
     queryKey: ['chef-quotes', session?.user?.id],
     enabled: !!session?.user?.id,
     queryFn: async () => {
-      console.log('Fetching quotes for chef:', session?.user?.id);
       const { data: quotes, error } = await supabase
         .from('quotes')
         .select(`
@@ -23,7 +22,6 @@ export const useQuotes = (session: any) => {
             role
           ),
           quote_items (
-            id,
             quantity,
             food_items (
               name,
@@ -39,12 +37,6 @@ export const useQuotes = (session: any) => {
             profiles!chef_quotes_chef_id_fkey (
               full_name
             )
-          ),
-          item_orders (
-            id,
-            chef_id,
-            quote_item_id,
-            order_status
           )
         `)
         .order('created_at', { ascending: false });
@@ -54,57 +46,58 @@ export const useQuotes = (session: any) => {
         throw error;
       }
 
+      // Filter quotes to show:
+      // 1. All pending quotes that don't have a chef assigned
+      // 2. Quotes specifically assigned to this chef
+      // 3. Quotes where this chef has submitted a quote
       return quotes?.filter(quote => {
-        if (quote.quote_status === 'pending') return true;
-        if (quote.item_orders?.some(order => order.chef_id === session.user.id)) return true;
+        // Show all pending quotes that don't have a chef assigned
+        if (quote.quote_status === 'pending' && !quote.chef_id) return true;
+        
+        // Show quotes assigned to this specific chef
+        if (quote.chef_id === session.user.id) return true;
+        
+        // Show quotes where this chef has already submitted a quote
         if (quote.chef_quotes?.some(q => q.chef_id === session.user.id)) return true;
+        
         return false;
-      }) || [];
+      }).filter(quote => 
+        // Ensure we only show quotes from customers
+        quote.profiles?.role === 'customer'
+      ) || [];
     }
   });
 
-  const handleQuoteSubmission = async (quoteId: string, itemPrices: Record<string, number>) => {
+  const handleQuoteSubmission = async (quoteId: string, price: number) => {
     try {
-      console.log('Starting quote submission process...', { quoteId, itemPrices });
+      // First check if this chef has already submitted a quote
+      const { data: existingQuotes, error: checkError } = await supabase
+        .from('chef_quotes')
+        .select('id')
+        .eq('quote_id', quoteId)
+        .eq('chef_id', session.user.id);
 
-      // First, update the quote status to approved but pending confirmation
-      const { error: quoteUpdateError } = await supabase
-        .from('quotes')
-        .update({ 
-          quote_status: 'approved' as QuoteStatus,
-          order_status: 'pending_confirmation' as OrderStatus,
-          is_confirmed: false 
-        })
-        .eq('id', quoteId);
+      if (checkError) throw checkError;
 
-      if (quoteUpdateError) {
-        console.error('Error updating quote status:', quoteUpdateError);
-        throw quoteUpdateError;
+      if (existingQuotes && existingQuotes.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You have already submitted a quote for this request",
+        });
+        return;
       }
 
-      // Create item orders with pending_confirmation status
-      const itemOrders = Object.entries(itemPrices).map(([itemId, price]) => ({
-        quote_id: quoteId,
-        quote_item_id: itemId,
-        chef_id: session.user.id,
-        price: price,
-        order_status: 'pending_confirmation' as OrderStatus,
-        is_confirmed: false
-      }));
+      const { error } = await supabase
+        .from('chef_quotes')
+        .insert({
+          quote_id: quoteId,
+          chef_id: session.user.id,
+          price: price,
+          is_visible_to_customer: true
+        });
 
-      console.log('Creating item orders:', itemOrders);
-
-      const { data: insertedOrders, error: ordersError } = await supabase
-        .from('item_orders')
-        .insert(itemOrders)
-        .select();
-
-      if (ordersError) {
-        console.error('Error creating item orders:', ordersError);
-        throw ordersError;
-      }
-
-      console.log('Successfully created item orders:', insertedOrders);
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -113,7 +106,6 @@ export const useQuotes = (session: any) => {
 
       queryClient.invalidateQueries({ queryKey: ['chef-quotes'] });
     } catch (error: any) {
-      console.error('Error in quote submission process:', error);
       toast({
         variant: "destructive",
         title: "Error",

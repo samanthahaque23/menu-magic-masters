@@ -16,11 +16,7 @@ interface QuoteFormProps {
 export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
   const [date, setDate] = useState<Date>();
   const { toast } = useToast();
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<QuoteFormData>();
-  
-  // Watch the number of guests
-  const vegGuests = watch('vegGuests');
-  const nonVegGuests = watch('nonVegGuests');
+  const { register, handleSubmit, formState: { errors } } = useForm<QuoteFormData>();
 
   const onSubmit = async (data: QuoteFormData) => {
     try {
@@ -44,15 +40,6 @@ export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
         return;
       }
 
-      // Adjust quantities based on guest numbers
-      const adjustedItems = items.map(item => {
-        const isVeg = item.foodItem.dietary_preference === 'vegetarian';
-        return {
-          ...item,
-          quantity: isVeg ? Number(vegGuests) : Number(nonVegGuests)
-        };
-      });
-
       // Create the quote with customer_id
       const { data: quote, error: quoteError } = await supabase
         .from('quotes')
@@ -68,8 +55,8 @@ export const QuoteForm = ({ items, onSuccess }: QuoteFormProps) => {
 
       if (quoteError) throw quoteError;
 
-      // Create quote items with adjusted quantities
-      const quoteItems = adjustedItems.map(item => ({
+      // Create quote items
+      const quoteItems = items.map(item => ({
         quote_id: quote.id,
         food_item_id: item.foodItem.id,
         quantity: item.quantity,
