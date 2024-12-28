@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -10,7 +10,6 @@ export const CustomerDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [customerName, setCustomerName] = useState("");
-  const queryClient = useQueryClient();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -33,24 +32,14 @@ export const CustomerDashboard = () => {
     checkAuth();
   }, [navigate]);
 
-  const { data: orders = [], isLoading, error } = useQuery({
+  const { data: orders, isLoading, error, refetch } = useQuery({
     queryKey: ['customer-orders'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return [];
-
-      const { data, error } = await supabase
+      console.log('Fetching customer orders...');
+      const { data: quotes, error } = await supabase
         .from('quotes')
         .select(`
-          id,
-          party_date,
-          party_location,
-          veg_guests,
-          non_veg_guests,
-          quote_status,
-          order_status,
-          created_at,
-          is_confirmed,
+          *,
           profiles!quotes_customer_id_fkey (
             full_name,
             email
@@ -77,60 +66,41 @@ export const CustomerDashboard = () => {
             )
           )
         `)
-        .eq('customer_id', session.user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching orders:', error);
+        toast({
+          variant: "destructive",
+          title: "Error fetching orders",
+          description: error.message,
+        });
         throw error;
       }
-
-      return data || [];
+      console.log('Fetched quotes:', quotes);
+      return quotes || [];
     },
-    retry: 1,
-    refetchOnWindowFocus: true
   });
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <DashboardNav userName={customerName} onSignOut={async () => {
-          await supabase.auth.signOut();
-          navigate('/restaurant');
-        }} />
-        <div className="container mx-auto py-8">
-          <div className="flex items-center justify-center p-8">Loading...</div>
-        </div>
-      </div>
-    );
-  }
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/restaurant');
+  };
 
-  if (error) {
-    console.error('Error loading orders:', error);
-    return (
-      <div className="min-h-screen bg-background">
-        <DashboardNav userName={customerName} onSignOut={async () => {
-          await supabase.auth.signOut();
-          navigate('/restaurant');
-        }} />
-        <div className="container mx-auto py-8">
-          <div className="text-red-500">Error loading orders. Please try again later.</div>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <div className="flex items-center justify-center p-8">Loading...</div>;
+
+  if (error) return (
+    <div className="container mx-auto py-8">
+      <div className="text-red-500">Error loading orders. Please try again later.</div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardNav userName={customerName} onSignOut={async () => {
-        await supabase.auth.signOut();
-        navigate('/restaurant');
-      }} />
+      <DashboardNav userName={customerName} onSignOut={handleSignOut} />
       <div className="container mx-auto py-8">
         <h2 className="text-3xl font-bold mb-6">My Orders</h2>
-        <CustomerOrders orders={orders} refetch={() => {
-          queryClient.invalidateQueries({ queryKey: ['customer-orders'] });
-        }} />
+        <CustomerOrders orders={orders} refetch={refetch} />
       </div>
     </div>
   );

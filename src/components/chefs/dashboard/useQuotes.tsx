@@ -54,9 +54,13 @@ export const useQuotes = (session: any) => {
         throw error;
       }
 
-      return quotes || [];
-    },
-    retry: 1
+      return quotes?.filter(quote => {
+        if (quote.quote_status === 'pending') return true;
+        if (quote.item_orders?.some(order => order.chef_id === session.user.id)) return true;
+        if (quote.chef_quotes?.some(q => q.chef_id === session.user.id)) return true;
+        return false;
+      }) || [];
+    }
   });
 
   const handleQuoteSubmission = async (quoteId: string, itemPrices: Record<string, number>) => {

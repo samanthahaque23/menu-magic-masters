@@ -32,34 +32,12 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
 
       if (signInError) throw signInError;
 
-      // Fetch user profile to get role, using maybeSingle()
-      const { data: profile, error: profileError } = await supabase
+      // Fetch user profile to get role
+      const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('email', data.email)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error('Profile fetch error:', profileError);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch user profile.",
-        });
-        return;
-      }
-
-      if (!profile) {
-        console.log('No profile found for email:', data.email);
-        toast({
-          variant: "destructive",
-          title: "Profile Not Found",
-          description: "Please complete your registration or contact support.",
-        });
-        // Sign out the user since their profile is missing
-        await supabase.auth.signOut();
-        return;
-      }
+        .single();
 
       if (profile?.role === 'customer') {
         navigate('/customer');
