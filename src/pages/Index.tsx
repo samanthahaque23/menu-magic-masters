@@ -21,6 +21,12 @@ const Index = () => {
           <div className="space-x-4">
             <Button 
               variant="secondary"
+              onClick={() => navigate('/admin')}
+            >
+              Admin Dashboard
+            </Button>
+            <Button 
+              variant="secondary"
               onClick={() => navigate('/restaurant')}
             >
               Restaurant Menu

@@ -3,11 +3,10 @@ import { Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface DashboardNavProps {
-  userName?: string;
-  onSignOut?: () => void;
+  title: string;
 }
 
-export const DashboardNav = ({ userName, onSignOut }: DashboardNavProps) => {
+export const DashboardNav = ({ title }: DashboardNavProps) => {
   const navigate = useNavigate();
 
   return (
@@ -18,21 +17,8 @@ export const DashboardNav = ({ userName, onSignOut }: DashboardNavProps) => {
           className="flex items-center gap-2 text-[24px] font-bold text-secondary font-['Proza_Libre']"
         >
           <Home className="h-6 w-6" />
-          Flavours From Home
+          {title}
         </button>
-        <div className="flex items-center gap-4">
-          {userName && (
-            <span className="text-secondary">Welcome, {userName}</span>
-          )}
-          {onSignOut && (
-            <Button 
-              variant="secondary" 
-              onClick={onSignOut}
-            >
-              Sign Out
-            </Button>
-          )}
-        </div>
       </div>
     </nav>
   );
