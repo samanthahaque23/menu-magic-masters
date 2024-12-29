@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,6 +18,7 @@ export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormP
     email: initialData?.email || '',
     phone: initialData?.phone || '',
     address: initialData?.address || '',
+    password: '', // New password field
   });
   const { toast } = useToast();
 
@@ -26,9 +28,15 @@ export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormP
 
     try {
       if (initialData) {
+        // Update existing customer
         const { error } = await supabase
           .from('customers')
-          .update(formData)
+          .update({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            address: formData.address
+          })
           .eq('id', initialData.id);
 
         if (error) throw error;
@@ -37,11 +45,25 @@ export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormP
           description: "Customer updated successfully",
         });
       } else {
-        const { error } = await supabase
-          .from('customers')
-          .insert([formData]);
+        // Create new customer with auth account
+        if (!formData.password || formData.password.length < 6) {
+          throw new Error("Password must be at least 6 characters long");
+        }
 
-        if (error) throw error;
+        // First create auth user
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              full_name: formData.name,
+              role: 'customer'
+            }
+          }
+        });
+
+        if (authError) throw authError;
+
         toast({
           title: "Success",
           description: "Customer created successfully",
@@ -61,37 +83,60 @@ export const CustomerForm = ({ initialData, onSuccess, onCancel }: CustomerFormP
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
+      <div className="space-y-2">
+        <Label htmlFor="name">Full Name</Label>
         <Input
-          placeholder="Name"
+          id="name"
+          placeholder="Enter full name"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           required
         />
       </div>
       
-      <div>
+      <div className="space-y-2">
+        <Label htmlFor="email">Email Address</Label>
         <Input
+          id="email"
           type="email"
-          placeholder="Email"
+          placeholder="Enter email address"
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           required
         />
       </div>
 
-      <div>
+      {!initialData && (
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="Enter password"
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            required
+            minLength={6}
+          />
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <Label htmlFor="phone">Phone Number</Label>
         <Input
+          id="phone"
           type="tel"
-          placeholder="Phone"
+          placeholder="Enter phone number"
           value={formData.phone}
           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
         />
       </div>
 
-      <div>
+      <div className="space-y-2">
+        <Label htmlFor="address">Address</Label>
         <Input
-          placeholder="Address"
+          id="address"
+          placeholder="Enter address"
           value={formData.address}
           onChange={(e) => setFormData({ ...formData, address: e.target.value })}
         />
