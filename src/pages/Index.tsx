@@ -27,12 +27,6 @@ const Index = () => {
             </Button>
             <Button 
               variant="secondary"
-              onClick={() => navigate('/admin')}
-            >
-              Admin Dashboard
-            </Button>
-            <Button 
-              variant="secondary"
               onClick={() => navigate('/chef')}
             >
               Chef Dashboard
