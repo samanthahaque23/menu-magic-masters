@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { ImagePreview } from './food/form/ImagePreview';
+import { useImageUpload } from './food/form/useImageUpload';
 
 interface FoodItemFormProps {
   initialData?: any;
@@ -15,7 +16,6 @@ interface FoodItemFormProps {
 
 export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormProps) => {
   const [loading, setLoading] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     description: initialData?.description || '',
@@ -23,90 +23,12 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
     course_type: initialData?.course_type || 'starter',
     image_url: initialData?.image_url || '',
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  
   const { toast } = useToast();
-
-  useEffect(() => {
-    checkAdminStatus();
-  }, []);
-
-  const checkAdminStatus = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "You must be logged in to perform this action",
-        });
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
-
-      if (profile?.role !== 'admin') {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "You must be an admin to perform this action",
-        });
-        return;
-      }
-
-      setIsAdmin(true);
-    } catch (error: any) {
-      console.error('Error checking admin status:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to verify admin status",
-      });
-    }
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
-    }
-  };
-
-  const uploadImage = async (file: File) => {
-    if (!isAdmin) {
-      throw new Error('Unauthorized: Admin access required');
-    }
-
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `${fileName}`;
-
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('food-images')
-      .upload(filePath, file);
-
-    if (uploadError) throw uploadError;
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('food-images')
-      .getPublicUrl(filePath);
-
-    return publicUrl;
-  };
+  const { imageFile, handleImageChange, uploadImage } = useImageUpload();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAdmin) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "You must be an admin to perform this action",
-      });
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -207,17 +129,7 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
       </div>
 
       <div className="space-y-2">
-        {(formData.image_url || imageFile) && (
-          <div className="w-full max-w-[200px] mx-auto">
-            <AspectRatio ratio={1}>
-              <img
-                src={imageFile ? URL.createObjectURL(imageFile) : formData.image_url}
-                alt="Food preview"
-                className="rounded-md object-cover w-full h-full"
-              />
-            </AspectRatio>
-          </div>
-        )}
+        <ImagePreview imageUrl={formData.image_url} imageFile={imageFile} />
         <Input
           type="file"
           accept="image/*"
@@ -230,7 +142,7 @@ export const FoodItemForm = ({ initialData, onSuccess, onCancel }: FoodItemFormP
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" disabled={loading || !isAdmin}>
+        <Button type="submit" disabled={loading}>
           {loading ? 'Saving...' : initialData ? 'Update' : 'Create'}
         </Button>
       </div>
